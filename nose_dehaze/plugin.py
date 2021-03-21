@@ -11,6 +11,7 @@ from nose_dehaze.diff import (
     inserted_text,
     utf8_replace,
 )
+from nose_dehaze.utils import extract_mock_name
 
 
 class Dehaze(Plugin):
@@ -42,6 +43,7 @@ class Dehaze(Plugin):
         while tb2 and formatted_output is None:
             frame = tb2.tb_frame
             co_name = frame.f_code.co_name
+
             if co_name == "assertEqual":
                 expected = frame.f_locals["first"]
                 actual = frame.f_locals["second"]
@@ -89,6 +91,16 @@ class Dehaze(Plugin):
                         expr=deleted_text(actual),
                         booly=deleted_text(booly),
                     )
+            elif co_name in {"assert_called_once", "assert_not_called"}:
+                mock_instance = frame.f_locals["self"]
+                mock_name = header_text(extract_mock_name(mock_instance))
+                message = "Mock {mock_name}".format(mock_name=mock_name) + " called {num} times."
+                expected_call_count = {
+                    "assert_called_once": 1,
+                    "assert_not_called": 0,
+                }[co_name]
+                expected = message.format(num=expected_call_count)
+                actual = message.format(num=mock_instance.call_count)
 
             if expected and actual:
                 exp, act = build_split_diff(expected, actual)
