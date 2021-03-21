@@ -45,6 +45,7 @@ class Dehaze(Plugin):
         expected = None
         actual = None
         hint = None
+        padded_newline = "\n{}".format(" " * 10)
         while tb2 and formatted_output is None:
             frame = tb2.tb_frame
             co_name = frame.f_code.co_name
@@ -75,7 +76,6 @@ class Dehaze(Plugin):
 
                 if isinstance(expected, dict) and isinstance(actual, dict):
                     # pad newlines to align to newlines with first line "expected"
-                    padded_newline = "\n{}".format(" " * 10)
                     expected = pformat(expected, width=1).replace("\n", padded_newline)
                     actual = pformat(actual, width=1).replace("\n", padded_newline)
                 elif isinstance(expected, list) and isinstance(actual, list):
@@ -99,7 +99,10 @@ class Dehaze(Plugin):
             elif co_name in {"assert_called_once", "assert_not_called"}:
                 mock_instance = frame.f_locals["self"]
                 mock_name = header_text(extract_mock_name(mock_instance))
-                message = "Mock {mock_name}".format(mock_name=mock_name) + " called {num} times."
+                message = (
+                    "Mock {mock_name}".format(mock_name=mock_name)
+                    + " called {num} times."
+                )
                 expected_call_count = {
                     "assert_called_once": 1,
                     "assert_not_called": 0,
@@ -114,7 +117,25 @@ class Dehaze(Plugin):
                 expected_kwargs = frame.f_locals["kwargs"]
 
                 actual = str(mock_instance.call_args).replace("call", mock_name)
-                expected = str(call(*expected_args, **expected_kwargs)).replace("call", mock_name)
+                expected = str(call(*expected_args, **expected_kwargs)).replace(
+                    "call", mock_name
+                )
+            elif co_name == "assert_called_with":
+                mock_instance = frame.f_locals["self"]
+                mock_name = header_text(extract_mock_name(mock_instance))
+
+                expected_args = frame.f_locals["args"]
+                expected_kwargs = frame.f_locals["kwargs"]
+
+                # TODO: diff against and colorize each call individually
+                actual = (
+                    pformat([c for c in mock_instance.call_args_list], width=1)
+                    .replace("call", mock_name)
+                    .replace("\n", padded_newline)
+                )
+                expected = str(call(*expected_args, **expected_kwargs)).replace(
+                    "call", mock_name
+                )
 
             if expected and actual:
                 exp, act = build_split_diff(expected, actual)
