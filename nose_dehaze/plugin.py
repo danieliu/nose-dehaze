@@ -7,6 +7,8 @@ from nose_dehaze.diff import (
     build_split_diff,
     deleted_text,
     diff_intro_text,
+    header_text,
+    inserted_text,
     utf8_replace,
 )
 
@@ -44,8 +46,28 @@ class Dehaze(Plugin):
                 expected = frame.f_locals["first"]
                 actual = frame.f_locals["second"]
 
+                # add hint when types differ
+                if type(expected) is not type(actual):
+                    expected_line = "{padding}{label} {expected_type}".format(
+                        padding=" " * 10,
+                        label=header_text("Expected:"),
+                        expected_type=deleted_text(type(expected)),
+                    )
+                    actual_line = "{padding}{label} {actual_type}".format(
+                        padding=" " * 12,
+                        label=header_text("Actual:"),
+                        actual_type=inserted_text(type(actual)),
+                    )
+                    hint = "\n".join(
+                        [
+                            "expected and actual are different types",
+                            expected_line,
+                            actual_line,
+                        ]
+                    )
+
                 if isinstance(expected, dict) and isinstance(actual, dict):
-                    # pad newlines to align to first line with "expected"
+                    # pad newlines to align to newlines with first line "expected"
                     padded_newline = "\n{}".format(" " * 10)
                     expected = pformat(expected, width=1).replace("\n", padded_newline)
                     actual = pformat(actual, width=1).replace("\n", padded_newline)
@@ -59,6 +81,8 @@ class Dehaze(Plugin):
                 expected = pformat(co_name == "assertTrue")
                 expr = frame.f_locals["expr"]
                 actual = pformat(expr)
+
+                # add hint when the value being checked isn't a bool
                 if not isinstance(expr, bool):
                     booly = "falsy" if co_name == "assertTrue" else "truthy"
                     hint = "{expr} is {booly}".format(
