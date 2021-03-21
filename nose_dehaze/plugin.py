@@ -2,6 +2,8 @@ from pprint import pformat
 
 from nose.plugins import Plugin
 
+from nose_dehaze.diff import Colour, build_split_diff, diff_intro_text, utf8_replace
+
 
 class Dehaze(Plugin):
     enabled = False
@@ -37,10 +39,22 @@ class Dehaze(Plugin):
                 if isinstance(expected, dict) and isinstance(actual, dict):
                     expected = pformat(expected, width=1).replace("\n", padded_newline)
                     actual = pformat(actual, width=1).replace("\n", padded_newline)
+                elif isinstance(expected, list) and isinstance(actual, list):
+                    expected = pformat(expected)
+                    actual = pformat(actual)
+                else:
+                    expected = pformat(expected)
+                    actual = pformat(actual)
 
+                exp, act = build_split_diff(expected, actual)
                 formatted_output = (
-                    "\n\nExpected: {expected}\n  Actual: {actual}"
-                ).format(expected=expected, actual=actual)
+                    "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
+                ).format(
+                    expected_label=Colour.stop + diff_intro_text("Expected:"),
+                    expected=utf8_replace("\n".join(exp)),
+                    actual_label=Colour.stop + diff_intro_text("Actual:"),
+                    actual=utf8_replace("\n".join(act)),
+                )
 
             tb2 = tb2.tb_next
 

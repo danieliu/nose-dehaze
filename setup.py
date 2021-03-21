@@ -1,6 +1,5 @@
 from setuptools import setup
 
-
 setup(
     name="nose-dehaze",
     version="0.1.0",
@@ -29,5 +28,8 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Topic :: Software Development :: Testing",
     ],
-    install_requires=[],
+    install_requires=[
+        'six',
+        'termcolor',
+    ],
 )
