@@ -7,6 +7,7 @@ except ImportError:
 
 from nose.plugins import Plugin
 
+from nose_dehaze.constants import MOCK_CALL_COUNT_MSG, PADDED_NEWLINE, TYPE_MISMATCH_HINT_MSG
 from nose_dehaze.diff import (
     Colour,
     build_call_args_diff_output,
@@ -46,7 +47,6 @@ class Dehaze(Plugin):
         expected = None
         actual = None
         hint = None
-        padded_newline = "\n{}".format(" " * 10)
         while tb2 and formatted_output is None:
             frame = tb2.tb_frame
             co_name = frame.f_code.co_name
@@ -57,15 +57,15 @@ class Dehaze(Plugin):
 
                 # add hint when types differ
                 if type(expected) is not type(actual):
-                    expected_line = "{padding}{label} {expected_type}".format(
-                        padding=" " * 10,
+                    expected_line =TYPE_MISMATCH_HINT_MSG.format(
+                        padding=PADDED_NEWLINE,
                         label=header_text("Expected:"),
-                        expected_type=deleted_text(type(expected)),
+                        vtype=deleted_text(type(expected)),
                     )
-                    actual_line = "{padding}{label} {actual_type}".format(
+                    actual_line = TYPE_MISMATCH_HINT_MSG.format(
                         padding=" " * 12,
                         label=header_text("Actual:"),
-                        actual_type=inserted_text(type(actual)),
+                        vtype=inserted_text(type(actual)),
                     )
                     hint = "\n".join(
                         [
@@ -76,9 +76,9 @@ class Dehaze(Plugin):
                     )
 
                 if isinstance(expected, dict) and isinstance(actual, dict):
-                    # pad newlines to align to newlines with first line "expected"
-                    expected = pformat(expected, width=1).replace("\n", padded_newline)
-                    actual = pformat(actual, width=1).replace("\n", padded_newline)
+                    # pad newlines to align to "Expected: "
+                    expected = pformat(expected, width=1).replace("\n", PADDED_NEWLINE)
+                    actual = pformat(actual, width=1).replace("\n", PADDED_NEWLINE)
                 elif isinstance(expected, list) and isinstance(actual, list):
                     expected = pformat(expected)
                     actual = pformat(actual)
@@ -100,21 +100,21 @@ class Dehaze(Plugin):
             elif co_name in {"assert_called_once", "assert_not_called"}:
                 mock_instance = frame.f_locals["self"]
                 mock_name = header_text(extract_mock_name(mock_instance))
-                message = (
-                    "Mock {mock_name}".format(mock_name=mock_name)
-                    + " called {num} times."
-                )
                 expected_call_count = {
                     "assert_called_once": 1,
                     "assert_not_called": 0,
                 }[co_name]
-                expected = message.format(num=expected_call_count)
-                actual = message.format(num=mock_instance.call_count)
+                expected = MOCK_CALL_COUNT_MSG.format(
+                    mock_name=mock_name, num=expected_call_count
+                )
+                actual = MOCK_CALL_COUNT_MSG.format(
+                    mock_name=mock_name, num=mock_instance.call_count
+                )
             elif co_name == "assert_called_once_with":
                 formatted_output = build_call_args_diff_output(
                     frame.f_locals["self"],
                     frame.f_locals["args"],
-                    frame.f_locals["kwargs"]
+                    frame.f_locals["kwargs"],
                 )
             elif co_name == "assert_called_with":
                 mock_instance = frame.f_locals["self"]
@@ -127,7 +127,7 @@ class Dehaze(Plugin):
                 actual = (
                     pformat([c for c in mock_instance.call_args_list], width=1)
                     .replace("call", mock_name)
-                    .replace("\n", padded_newline)
+                    .replace("\n", PADDED_NEWLINE)
                 )
                 expected = str(call(*expected_args, **expected_kwargs)).replace(
                     "call", mock_name
