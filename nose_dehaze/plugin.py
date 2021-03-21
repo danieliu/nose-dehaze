@@ -2,7 +2,13 @@ from pprint import pformat
 
 from nose.plugins import Plugin
 
-from nose_dehaze.diff import Colour, build_split_diff, deleted_text, diff_intro_text, utf8_replace
+from nose_dehaze.diff import (
+    Colour,
+    build_split_diff,
+    deleted_text,
+    diff_intro_text,
+    utf8_replace,
+)
 
 
 class Dehaze(Plugin):
