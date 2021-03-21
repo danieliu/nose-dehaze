@@ -1,5 +1,10 @@
 from pprint import pformat
 
+try:
+    from unittest.mock import call
+except ImportError:
+    from mock import call
+
 from nose.plugins import Plugin
 
 from nose_dehaze.diff import (
@@ -101,6 +106,15 @@ class Dehaze(Plugin):
                 }[co_name]
                 expected = message.format(num=expected_call_count)
                 actual = message.format(num=mock_instance.call_count)
+            elif co_name == "assert_called_once_with":
+                mock_instance = frame.f_locals["self"]
+                mock_name = header_text(extract_mock_name(mock_instance))
+
+                expected_args = frame.f_locals["args"]
+                expected_kwargs = frame.f_locals["kwargs"]
+
+                actual = str(mock_instance.call_args).replace("call", mock_name)
+                expected = str(call(*expected_args, **expected_kwargs)).replace("call", mock_name)
 
             if expected and actual:
                 exp, act = build_split_diff(expected, actual)
