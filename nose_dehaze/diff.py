@@ -5,9 +5,16 @@ import difflib
 import pprint
 from functools import partial
 
+try:
+    from unittest.mock import call
+except ImportError:
+    from mock import call
+
 import six
 from six import text_type
 from termcolor import colored
+
+from nose_dehaze.utils import extract_mock_name
 
 
 def utf8_replace(s):
@@ -140,3 +147,34 @@ def build_unified_diff(lhs_repr, rhs_repr):
             output.append(non_formatted(line))
 
     return output
+
+
+def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
+    """
+    Creates the formatted, colorized output for mock.assert_called_with failures.
+
+    Handles both assert_called_once_with checks
+    1. call count
+    2. args & kwargs
+
+    :param mock_instance: the Mock instance asserted upon
+    :param e_args: the expected function args the mock was called with
+    :param e_kwargs: the expected function kwargs the mock was called with
+    """
+    mock_name = header_text(extract_mock_name(mock_instance))
+    args, kwargs = mock_instance.call_args
+
+    actual = str(mock_instance.call_args).replace("call", mock_name)
+    expected = str(call(*e_args, **e_kwargs)).replace(
+        "call", mock_name
+    )
+    exp, act = build_split_diff(expected, actual)
+    formatted_output = (
+        "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
+    ).format(
+        expected_label=Colour.stop + diff_intro_text("Expected:"),
+        expected=utf8_replace("\n".join(exp)),
+        actual_label=Colour.stop + diff_intro_text("Actual:"),
+        actual=utf8_replace("\n".join(act)),
+    )
+    return formatted_output

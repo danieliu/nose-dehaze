@@ -9,6 +9,7 @@ from nose.plugins import Plugin
 
 from nose_dehaze.diff import (
     Colour,
+    build_call_args_diff_output,
     build_split_diff,
     deleted_text,
     diff_intro_text,
@@ -110,15 +111,10 @@ class Dehaze(Plugin):
                 expected = message.format(num=expected_call_count)
                 actual = message.format(num=mock_instance.call_count)
             elif co_name == "assert_called_once_with":
-                mock_instance = frame.f_locals["self"]
-                mock_name = header_text(extract_mock_name(mock_instance))
-
-                expected_args = frame.f_locals["args"]
-                expected_kwargs = frame.f_locals["kwargs"]
-
-                actual = str(mock_instance.call_args).replace("call", mock_name)
-                expected = str(call(*expected_args, **expected_kwargs)).replace(
-                    "call", mock_name
+                formatted_output = build_call_args_diff_output(
+                    frame.f_locals["self"],
+                    frame.f_locals["args"],
+                    frame.f_locals["kwargs"]
                 )
             elif co_name == "assert_called_with":
                 mock_instance = frame.f_locals["self"]
@@ -137,7 +133,7 @@ class Dehaze(Plugin):
                     "call", mock_name
                 )
 
-            if expected and actual:
+            if expected and actual and not formatted_output:
                 exp, act = build_split_diff(expected, actual)
                 formatted_output = (
                     "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
@@ -147,12 +143,13 @@ class Dehaze(Plugin):
                     actual_label=Colour.stop + diff_intro_text("Actual:"),
                     actual=utf8_replace("\n".join(act)),
                 )
-                if hint is not None:
-                    hint_output = "\n\n    {hint_label} {hint}".format(
-                        hint_label=Colour.stop + diff_intro_text("hint:"),
-                        hint=hint,
-                    )
-                    formatted_output += hint_output
+
+            if hint is not None:
+                hint_output = "\n\n    {hint_label} {hint}".format(
+                    hint_label=Colour.stop + diff_intro_text("hint:"),
+                    hint=hint,
+                )
+                formatted_output += hint_output
 
             tb2 = tb2.tb_next
 
