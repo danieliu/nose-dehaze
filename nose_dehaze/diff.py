@@ -161,8 +161,8 @@ def build_args_diff(expected, actual):
     :return: colorized, formatted diff str
     """
     i = 0
-    expected_result = []
-    actual_result = []
+    expected_args = []
+    actual_args = []
     hints = []
 
     expected_length = len(expected)
@@ -184,22 +184,23 @@ def build_args_diff(expected, actual):
         else:
             hints.append(None)
 
-        exp, act = build_split_diff(pformat(a), pformat(b))
-        expected_result.append("\n".join(exp))
-        actual_result.append("\n".join(act))
+        act, exp = build_split_diff(pformat(b), pformat(a))
+        expected_args.append("\n".join(exp))
+        actual_args.append("\n".join(act))
 
         i += 1
 
     # handle different arg lengths
-    if i == expected_length and i < actual_length:
-        for remaining_arg in actual[i:]:
-            actual_result.append(deleted_text(pformat(remaining_arg)))
-
     if i == actual_length and i < expected_length:
         for remaining_arg in expected[i:]:
-            expected_result.append(inserted_text(pformat(remaining_arg)))
+            expected_args.append(deleted_text(pformat(remaining_arg)))
 
-    return expected_result, actual_result
+    if i == expected_length and i < actual_length:
+        for remaining_arg in actual[i:]:
+            actual_args.append(inserted_text(pformat(remaining_arg)))
+
+
+    return expected_args, actual_args
 
 
 def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
@@ -217,9 +218,9 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
     mock_name = extract_mock_name(mock_instance)
     args, kwargs = mock_instance.call_args
 
-    expected_result, actual_result = build_args_diff(e_args, args)
-    expected_kwargs, actual_kwargs = build_split_diff(
-        pformat(e_kwargs), pformat(kwargs)
+    expected_args, actual_args = build_args_diff(e_args, args)
+    actual_kwargs, expected_kwargs = build_split_diff(
+        pformat(kwargs), pformat(e_kwargs)
     )
 
     extra_padding = " " * (len(mock_name) + 1)
@@ -229,13 +230,13 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
     sep_a = ",{pad}".format(pad=pad) if args and kwargs else ""
     exp = "{mock_name}({exp}{sep}{ekw})".format(
         mock_name=header_text(mock_name),
-        exp=", ".join(expected_result),
+        exp=", ".join(expected_args),
         sep=sep_e,
         ekw="\n".join(expected_kwargs) if e_kwargs else "",
     )
     act = "{mock_name}({act}{sep}{akw})".format(
         mock_name=header_text(mock_name),
-        act=", ".join(actual_result),
+        act=", ".join(actual_args),
         sep=sep_a,
         akw="\n".join(actual_kwargs) if kwargs else "",
     )

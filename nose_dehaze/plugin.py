@@ -175,7 +175,7 @@ class Dehaze(Plugin):
                     )
 
             if expected and actual and not formatted_output:
-                exp, act = build_split_diff(expected, actual)
+                act, exp = build_split_diff(actual, expected)
                 formatted_output = (
                     "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
                 ).format(
