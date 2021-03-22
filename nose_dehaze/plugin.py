@@ -7,7 +7,11 @@ except ImportError:
 
 from nose.plugins import Plugin
 
-from nose_dehaze.constants import MOCK_CALL_COUNT_MSG, PADDED_NEWLINE, TYPE_MISMATCH_HINT_MSG
+from nose_dehaze.constants import (
+    MOCK_CALL_COUNT_MSG,
+    PADDED_NEWLINE,
+    TYPE_MISMATCH_HINT_MSG,
+)
 from nose_dehaze.diff import (
     Colour,
     build_call_args_diff_output,
@@ -57,7 +61,7 @@ class Dehaze(Plugin):
 
                 # add hint when types differ
                 if type(expected) is not type(actual):
-                    expected_line =TYPE_MISMATCH_HINT_MSG.format(
+                    expected_line = TYPE_MISMATCH_HINT_MSG.format(
                         padding=PADDED_NEWLINE,
                         label=header_text("Expected:"),
                         vtype=deleted_text(type(expected)),
@@ -118,7 +122,7 @@ class Dehaze(Plugin):
                 )
             elif co_name == "assert_called_with":
                 mock_instance = frame.f_locals["self"]
-                mock_name = header_text(extract_mock_name(mock_instance))
+                mock_name = extract_mock_name(mock_instance)
 
                 expected_args = frame.f_locals["args"]
                 expected_kwargs = frame.f_locals["kwargs"]
@@ -131,6 +135,22 @@ class Dehaze(Plugin):
                 )
                 expected = str(call(*expected_args, **expected_kwargs)).replace(
                     "call", mock_name
+                )
+            elif co_name == "assert_has_calls":
+                mock_instance = frame.f_locals["self"]
+                mock_name = extract_mock_name(mock_instance)
+
+                expected_calls = frame.f_locals["expected"]
+
+                expected = (
+                    pformat([c for c in expected_calls], width=1)
+                    .replace("call", mock_name)
+                    .replace("\n", PADDED_NEWLINE)
+                )
+                actual = (
+                    pformat([c for c in mock_instance.call_args_list], width=1)
+                    .replace("call", mock_name)
+                    .replace("\n", PADDED_NEWLINE)
                 )
 
             if expected and actual and not formatted_output:

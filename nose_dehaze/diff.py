@@ -2,8 +2,8 @@
 utils for diffing, completely "borrowed" from pytest-clarity
 """
 import difflib
-from pprint import pformat
 from functools import partial
+from pprint import pformat
 
 try:
     from unittest.mock import call
