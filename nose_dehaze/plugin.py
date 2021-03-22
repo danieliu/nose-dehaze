@@ -109,10 +109,10 @@ class Dehaze(Plugin):
                     "assert_not_called": 0,
                 }[co_name]
                 expected = MOCK_CALL_COUNT_MSG.format(
-                    mock_name=mock_name, num=expected_call_count
+                    padding="", mock_name=mock_name, num=expected_call_count
                 )
                 actual = MOCK_CALL_COUNT_MSG.format(
-                    mock_name=mock_name, num=mock_instance.call_count
+                    padding="", mock_name=mock_name, num=mock_instance.call_count
                 )
             elif co_name == "assert_called_once_with":
                 formatted_output = build_call_args_diff_output(
@@ -152,6 +152,27 @@ class Dehaze(Plugin):
                     .replace("call", mock_name)
                     .replace("\n", PADDED_NEWLINE)
                 )
+
+                if not mock_instance.call_count == len(expected_calls):
+                    expected_line = MOCK_CALL_COUNT_MSG.format(
+                        padding=PADDED_NEWLINE,
+                        label=header_text("Expected: "),
+                        mock_name=header_text(mock_name),
+                        num=deleted_text(len(expected_calls)),
+                    )
+                    actual_line = MOCK_CALL_COUNT_MSG.format(
+                        padding=" " * 12,
+                        label=header_text("Actual: "),
+                        mock_name=header_text(mock_name),
+                        num=inserted_text(mock_instance.call_count),
+                    )
+                    hint = "\n".join(
+                        [
+                            "expected and actual call counts differ",
+                            expected_line,
+                            actual_line,
+                        ]
+                    )
 
             if expected and actual and not formatted_output:
                 exp, act = build_split_diff(expected, actual)
