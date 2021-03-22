@@ -109,10 +109,16 @@ class Dehaze(Plugin):
                     "assert_not_called": 0,
                 }[co_name]
                 expected = MOCK_CALL_COUNT_MSG.format(
-                    padding="", mock_name=mock_name, num=expected_call_count
+                    padding="",
+                    label="",
+                    mock_name=mock_name,
+                    num=expected_call_count,
                 )
                 actual = MOCK_CALL_COUNT_MSG.format(
-                    padding="", mock_name=mock_name, num=mock_instance.call_count
+                    padding="",
+                    label="",
+                    mock_name=mock_name,
+                    num=mock_instance.call_count,
                 )
             elif co_name == "assert_called_once_with":
                 formatted_output = build_call_args_diff_output(
