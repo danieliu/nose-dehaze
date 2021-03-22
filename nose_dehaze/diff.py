@@ -199,7 +199,6 @@ def build_args_diff(expected, actual):
         for remaining_arg in actual[i:]:
             actual_args.append(inserted_text(pformat(remaining_arg)))
 
-
     return expected_args, actual_args
 
 
@@ -218,10 +217,11 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
     mock_name = extract_mock_name(mock_instance)
     args, kwargs = mock_instance.call_args
 
+    kwarg_str = ", ".join(["{k}={v}".format(k=k, v=v) for k, v in kwargs.items()])
+    e_kwarg_str = ", ".join(["{k}={v}".format(k=k, v=v) for k, v in e_kwargs.items()])
+
     expected_args, actual_args = build_args_diff(e_args, args)
-    actual_kwargs, expected_kwargs = build_split_diff(
-        pformat(kwargs), pformat(e_kwargs)
-    )
+    actual_kwargs, expected_kwargs = build_split_diff(kwarg_str, e_kwarg_str)
 
     extra_padding = " " * (len(mock_name) + 1)
     pad = PADDED_NEWLINE + extra_padding
