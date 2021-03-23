@@ -221,10 +221,10 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
     pad = PADDED_NEWLINE + extra_padding
 
     kwarg_str = ",{}".format(pad).join(
-        ["{k}={v}".format(k=k, v=v) for k, v in kwargs.items()]
+        ["{k}={v}".format(k=k, v=pformat(v)) for k, v in kwargs.items()]
     )
     e_kwarg_str = ",{}".format(pad).join(
-        ["{k}={v}".format(k=k, v=v) for k, v in e_kwargs.items()]
+        ["{k}={v}".format(k=k, v=pformat(v)) for k, v in e_kwargs.items()]
     )
 
     expected_args, actual_args = build_args_diff(e_args, args)
