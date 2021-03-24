@@ -267,6 +267,9 @@ def dehaze(assert_method, frame_locals):
         else:
             expected = pformat(expected)
             actual = pformat(actual)
+    elif assert_method == "assertDictEqual":
+        expected = pformat(frame_locals["d1"], width=1).replace("\n", PADDED_NEWLINE)
+        actual = pformat(frame_locals["d2"], width=1).replace("\n", PADDED_NEWLINE)
     elif assert_method in {"assertTrue", "assertFalse"}:
         expected = pformat(assert_method == "assertTrue")
         expr = frame_locals["expr"]
