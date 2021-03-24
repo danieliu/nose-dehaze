@@ -14,7 +14,11 @@ import six
 from six import text_type
 from termcolor import colored
 
-from nose_dehaze.constants import PADDED_NEWLINE
+from nose_dehaze.constants import (
+    MOCK_CALL_COUNT_MSG,
+    PADDED_NEWLINE,
+    TYPE_MISMATCH_HINT_MSG,
+)
 from nose_dehaze.utils import extract_mock_name
 
 
@@ -210,4 +214,165 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
         actual=utf8_replace(act),
     )
 
+    return formatted_output
+
+
+def dehaze(assert_method, frame_locals):
+    # type: (str, dict) -> str
+    """
+    Given a test assert method, e.g. assertEqual, extracts the corresponding relevant
+    local variables needed to reconstruct the reason for assertion failure and render
+    a "dehazed" output with coloring and formatting for readability.
+
+    :param assert_method: the test assertion method
+    :param frame_locals: the traceback frame local variables
+    :return: the dehazed (colorized, formatted) output string
+    """
+    expected = None
+    actual = None
+    hint = None
+    formatted_output = None
+
+    if assert_method == "assertEqual":
+        expected = frame_locals["first"]
+        actual = frame_locals["second"]
+
+        # add hint when types differ
+        if type(expected) is not type(actual):
+            expected_line = TYPE_MISMATCH_HINT_MSG.format(
+                padding=PADDED_NEWLINE,
+                label=header_text("Expected:"),
+                vtype=deleted_text(type(expected)),
+            )
+            actual_line = TYPE_MISMATCH_HINT_MSG.format(
+                padding=" " * 12,
+                label=header_text("Actual:"),
+                vtype=inserted_text(type(actual)),
+            )
+            hint = "\n".join(
+                [
+                    "expected and actual are different types",
+                    expected_line,
+                    actual_line,
+                ]
+            )
+
+        if isinstance(expected, dict) and isinstance(actual, dict):
+            # pad newlines to align to "Expected: "
+            expected = pformat(expected, width=1).replace("\n", PADDED_NEWLINE)
+            actual = pformat(actual, width=1).replace("\n", PADDED_NEWLINE)
+        elif isinstance(expected, list) and isinstance(actual, list):
+            expected = pformat(expected)
+            actual = pformat(actual)
+        else:
+            expected = pformat(expected)
+            actual = pformat(actual)
+    elif assert_method in {"assertTrue", "assertFalse"}:
+        expected = pformat(assert_method == "assertTrue")
+        expr = frame_locals["expr"]
+        actual = pformat(expr)
+
+        # add hint when the value being checked isn't a bool
+        if not isinstance(expr, bool):
+            booly = "falsy" if assert_method == "assertTrue" else "truthy"
+            hint = "{expr} is {booly}".format(
+                expr=deleted_text(actual),
+                booly=deleted_text(booly),
+            )
+    elif assert_method in {"assert_called_once", "assert_not_called"}:
+        mock_instance = frame_locals["self"]
+        mock_name = header_text(extract_mock_name(mock_instance))
+        expected_call_count = {
+            "assert_called_once": 1,
+            "assert_not_called": 0,
+        }[assert_method]
+        expected = MOCK_CALL_COUNT_MSG.format(
+            padding="",
+            label="",
+            mock_name=mock_name,
+            num=expected_call_count,
+        )
+        actual = MOCK_CALL_COUNT_MSG.format(
+            padding="",
+            label="",
+            mock_name=mock_name,
+            num=mock_instance.call_count,
+        )
+    elif assert_method == "assert_called_once_with":
+        formatted_output = build_call_args_diff_output(
+            frame_locals["self"],
+            frame_locals["args"],
+            frame_locals["kwargs"],
+        )
+    elif assert_method == "assert_called_with":
+        mock_instance = frame_locals["self"]
+        mock_name = extract_mock_name(mock_instance)
+
+        expected_args = frame_locals["args"]
+        expected_kwargs = frame_locals["kwargs"]
+
+        # TODO: diff against and colorize each call individually
+        actual = (
+            pformat([c for c in mock_instance.call_args_list], width=1)
+            .replace("call", mock_name)
+            .replace("\n", PADDED_NEWLINE)
+        )
+        expected = str(call(*expected_args, **expected_kwargs)).replace(
+            "call", mock_name
+        )
+    elif assert_method == "assert_has_calls":
+        mock_instance = frame_locals["self"]
+        mock_name = extract_mock_name(mock_instance)
+
+        expected_calls = frame_locals["expected"]
+
+        expected = (
+            pformat([c for c in expected_calls], width=1)
+            .replace("call", mock_name)
+            .replace("\n", PADDED_NEWLINE)
+        )
+        actual = (
+            pformat([c for c in mock_instance.call_args_list], width=1)
+            .replace("call", mock_name)
+            .replace("\n", PADDED_NEWLINE)
+        )
+
+        if not mock_instance.call_count == len(expected_calls):
+            expected_line = MOCK_CALL_COUNT_MSG.format(
+                padding=PADDED_NEWLINE,
+                label=header_text("Expected: "),
+                mock_name=header_text(mock_name),
+                num=deleted_text(len(expected_calls)),
+            )
+            actual_line = MOCK_CALL_COUNT_MSG.format(
+                padding=" " * 12,
+                label=header_text("Actual: "),
+                mock_name=header_text(mock_name),
+                num=inserted_text(mock_instance.call_count),
+            )
+            hint = "\n".join(
+                [
+                    "expected and actual call counts differ",
+                    expected_line,
+                    actual_line,
+                ]
+            )
+
+    if expected and actual and not formatted_output:
+        act, exp = build_split_diff(actual, expected)
+        formatted_output = (
+            "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
+        ).format(
+            expected_label=Colour.stop + diff_intro_text("Expected:"),
+            expected=utf8_replace("\n".join(exp)),
+            actual_label=Colour.stop + diff_intro_text("Actual:"),
+            actual=utf8_replace("\n".join(act)),
+        )
+
+    if hint is not None:
+        hint_output = "\n\n    {hint_label} {hint}".format(
+            hint_label=Colour.stop + diff_intro_text("hint:"),
+            hint=hint,
+        )
+        formatted_output += hint_output
     return formatted_output
