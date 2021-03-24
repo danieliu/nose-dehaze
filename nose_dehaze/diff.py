@@ -25,46 +25,12 @@ def utf8_replace(s):
         return s
 
 
-def direct_type_mismatch(lhs, rhs):
-    return type(lhs) is not type(rhs)
-
-
-def display_op_for(pytest_op):
-    return "==" if pytest_op == "equal" else pytest_op
-
-
-def possibly_missing_eq(lhs, rhs):
-    try:
-        left_dict, right_dict = vars(lhs), vars(rhs)
-        return (type(lhs) is type(rhs)) and lhs != rhs and left_dict == right_dict
-    except TypeError:
-        return False
-
-
-def has_differing_len(lhs, rhs):
-    try:
-        return len(lhs) != len(rhs)
-    except TypeError:
-        return False
-
-
-def pformat_no_color(s, width):
-    if isinstance(s, six.string_types):
-        return '"' + s + '"'
-    return pformat(s, width=width)
-
-
 class Colour(object):
     red = "red"
     green = "green"
     cyan = "cyan"
     yellow = "yellow"
     stop = "\033[0m"
-
-
-class BgColour(object):
-    red = "on_red"
-    green = "on_green"
 
 
 class Attr(object):
@@ -79,16 +45,6 @@ header_text = partial(colored, color=Colour.yellow, attrs=[Attr.bold])
 
 def non_formatted(text):
     return Colour.stop + text
-
-
-def hint_text(text):
-    bold_cyan = colored(text, color=Colour.cyan, attrs=[Attr.bold])
-    return bold_cyan
-
-
-def hint_body_text(text):
-    bold_red = colored(Colour.stop + text, color=Colour.red, attrs=[Attr.bold])
-    return bold_red
 
 
 def build_split_diff(lhs_repr, rhs_repr):
