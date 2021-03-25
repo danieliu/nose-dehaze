@@ -259,8 +259,8 @@ def dehaze(assert_method, frame_locals):
 
         if isinstance(expected, dict) and isinstance(actual, dict):
             # pad newlines to align to "Expected: "
-            expected = pformat(expected, width=1).replace("\n", PADDED_NEWLINE)
-            actual = pformat(actual, width=1).replace("\n", PADDED_NEWLINE)
+            expected = pformat(expected, width=1)
+            actual = pformat(actual, width=1)
         elif isinstance(expected, list) and isinstance(actual, list):
             expected = pformat(expected)
             actual = pformat(actual)
@@ -268,8 +268,8 @@ def dehaze(assert_method, frame_locals):
             expected = pformat(expected)
             actual = pformat(actual)
     elif assert_method == "assertDictEqual":
-        expected = pformat(frame_locals["d1"], width=1).replace("\n", PADDED_NEWLINE)
-        actual = pformat(frame_locals["d2"], width=1).replace("\n", PADDED_NEWLINE)
+        expected = pformat(frame_locals["d1"], width=1)
+        actual = pformat(frame_locals["d2"], width=1)
     elif assert_method in {"assertTrue", "assertFalse"}:
         expected = pformat(assert_method == "assertTrue")
         expr = frame_locals["expr"]
@@ -318,7 +318,6 @@ def dehaze(assert_method, frame_locals):
         actual = (
             pformat([c for c in mock_instance.call_args_list], width=1)
             .replace("call", mock_name)
-            .replace("\n", PADDED_NEWLINE)
         )
         expected = str(call(*expected_args, **expected_kwargs)).replace(
             "call", mock_name
@@ -332,12 +331,10 @@ def dehaze(assert_method, frame_locals):
         expected = (
             pformat([c for c in expected_calls], width=1)
             .replace("call", mock_name)
-            .replace("\n", PADDED_NEWLINE)
         )
         actual = (
             pformat([c for c in mock_instance.call_args_list], width=1)
             .replace("call", mock_name)
-            .replace("\n", PADDED_NEWLINE)
         )
 
         if not mock_instance.call_count == len(expected_calls):
@@ -367,9 +364,9 @@ def dehaze(assert_method, frame_locals):
             "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
         ).format(
             expected_label=Colour.stop + diff_intro_text("Expected:"),
-            expected=utf8_replace("\n".join(exp)),
+            expected=utf8_replace(PADDED_NEWLINE.join(exp)),
             actual_label=Colour.stop + diff_intro_text("Actual:"),
-            actual=utf8_replace("\n".join(act)),
+            actual=utf8_replace(PADDED_NEWLINE.join(act)),
         )
 
     if hint is not None:
