@@ -237,7 +237,7 @@ def dehaze(assert_method, frame_locals):
     hint = None
     formatted_output = None
 
-    if assert_method == "assertEqual":
+    if assert_method in {"assertEqual", "assertEquals"}:
         expected = frame_locals["first"]
         actual = frame_locals["second"]
 
@@ -271,6 +271,10 @@ def dehaze(assert_method, frame_locals):
         else:
             expected = pformat(expected)
             actual = pformat(actual)
+    elif assert_method == "assertNotEqual":
+        expected = pformat(frame_locals["first"])
+        actual = pformat(frame_locals["second"])
+        hint = "expected and actual are equal"
     elif assert_method == "assertDictEqual":
         expected = pformat(frame_locals["d1"], width=1)
         actual = pformat(frame_locals["d2"], width=1)

@@ -6,6 +6,7 @@ TYPE_MISMATCH_HINT_MSG = "{padding}{label} {vtype}"
 ASSERT_METHODS = {
     "assertEqual",
     "assertEquals",  # same as assertEqual but "deprecated" and likely still used
+    "assertNotEqual",
     "assertDictEqual",  # automatically called by assertEqual but likely called directly
     "assertTrue",
     "assertFalse",
