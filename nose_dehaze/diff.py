@@ -175,7 +175,11 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
     :param e_kwargs: the expected function kwargs the mock was called with
     """
     mock_name = extract_mock_name(mock_instance)
-    args, kwargs = mock_instance.call_args
+
+    args = ()
+    kwargs = {}
+    if mock_instance.call_args is not None:
+        args, kwargs = mock_instance.call_args
 
     extra_padding = " " * (len(mock_name) + 1)
     pad = PADDED_NEWLINE + extra_padding
