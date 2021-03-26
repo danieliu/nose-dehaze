@@ -11,7 +11,6 @@ try:
 except ImportError:
     from mock import call
 
-import six
 from six import text_type
 from termcolor import colored
 
@@ -140,9 +139,8 @@ def build_args_diff(expected, actual):
             hints.append(
                 "Arg {num} expected type: {etype}, actual type: {atype}".format(
                     num=i + 1,
-                    etype=deleted_text(
-                        type(expected), atype=inserted_text(type(actual))
-                    ),
+                    etype=deleted_text(type(expected)),
+                    atype=inserted_text(type(actual)),
                 )
             )
         else:

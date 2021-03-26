@@ -1,11 +1,14 @@
 lint:
-	flake8 dehaze tests
+	flake8 nose_dehaze tests
 
 test:
-	nosetests
+	nosetests tests
 
 black:
 	black nose_dehaze tests
 
 isort:
 	isort nose_dehaze tests
+
+mypy:
+	mypy nose_dehaze

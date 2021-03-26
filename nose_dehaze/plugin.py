@@ -1,5 +1,3 @@
-from pprint import pformat
-
 from nose.plugins import Plugin
 
 from nose_dehaze.constants import ASSERT_METHODS
@@ -19,7 +17,7 @@ class Dehaze(Plugin):
             action="store_true",
             default=env.get(self.env_opt, False),
             dest="dehaze",
-            help="Prettify and colorize test results output. Environment variable: {}".format(
+            help="Prettify and colorize test results output. Environment variable: {}".format(  # noqa: E501
                 self.env_opt
             ),
         )
