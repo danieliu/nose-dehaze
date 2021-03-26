@@ -272,9 +272,11 @@ def dehaze(assert_method, frame_locals):
             expected = pformat(expected)
             actual = pformat(actual)
     elif assert_method == "assertNotEqual":
-        expected = pformat(frame_locals["first"])
-        actual = pformat(frame_locals["second"])
-        hint = "expected and actual are equal"
+        first = pformat(frame_locals["first"])
+        second = pformat(frame_locals["second"])
+        comparison = partial("{first} {op} {second}".format, first=first, second=second)
+        expected = comparison(op="!=")
+        actual = comparison(op="==")
     elif assert_method == "assertDictEqual":
         expected = pformat(frame_locals["d1"], width=1)
         actual = pformat(frame_locals["d2"], width=1)
@@ -323,9 +325,8 @@ def dehaze(assert_method, frame_locals):
         expected_kwargs = frame_locals["kwargs"]
 
         # TODO: diff against and colorize each call individually
-        actual = (
-            pformat([c for c in mock_instance.call_args_list], width=1)
-            .replace("call", mock_name)
+        actual = pformat([c for c in mock_instance.call_args_list], width=1).replace(
+            "call", mock_name
         )
         expected = str(call(*expected_args, **expected_kwargs)).replace(
             "call", mock_name
@@ -336,13 +337,11 @@ def dehaze(assert_method, frame_locals):
 
         expected_calls = frame_locals["expected"]
 
-        expected = (
-            pformat([c for c in expected_calls], width=1)
-            .replace("call", mock_name)
+        expected = pformat([c for c in expected_calls], width=1).replace(
+            "call", mock_name
         )
-        actual = (
-            pformat([c for c in mock_instance.call_args_list], width=1)
-            .replace("call", mock_name)
+        actual = pformat([c for c in mock_instance.call_args_list], width=1).replace(
+            "call", mock_name
         )
 
         if not mock_instance.call_count == len(expected_calls):
