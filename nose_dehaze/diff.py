@@ -4,6 +4,7 @@ utils for diffing, completely "borrowed" from pytest-clarity
 import difflib
 from functools import partial
 from pprint import pformat
+from typing import TYPE_CHECKING
 
 try:
     from unittest.mock import call
@@ -20,6 +21,9 @@ from nose_dehaze.constants import (
     TYPE_MISMATCH_HINT_MSG,
 )
 from nose_dehaze.utils import extract_mock_name
+
+if TYPE_CHECKING:
+    from mock import Mock
 
 
 def utf8_replace(s):
@@ -219,6 +223,22 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
     )
 
     return formatted_output
+
+
+def assert_bool_diff(assert_method, frame_locals):
+    # type: (str, Mock, str, dict) -> tuple
+    hint = None
+    expected = assert_method == "assertTrue"
+    actual = frame_locals["expr"]
+
+    if not isinstance(actual, bool):
+        booly = "falsy" if assert_method == "assertTrue" else "truthy"
+        hint = "{expr} is {booly}".format(
+            expr=deleted_text(actual),
+            booly=deleted_text(booly),
+        )
+
+    return pformat(expected), pformat(actual), hint
 
 
 def dehaze(assert_method, frame_locals):
