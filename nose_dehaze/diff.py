@@ -239,6 +239,43 @@ def assert_bool_diff(assert_method, frame_locals):
     return pformat(expected), pformat(actual), hint
 
 
+def assert_call_count_diff(assert_method, mock_instance, mock_name):
+    # type: (str, Mock, str) -> tuple
+    expected_call_count = {
+        "assert_called_once": 1,
+        "assert_not_called": 0,
+    }[assert_method]
+    actual_call_count = mock_instance.call_count
+
+    message = partial(
+        "Mock {mock_name} called {count} times.".format,
+        mock_name=header_text(mock_name),
+    )
+    expected = message(count=expected_call_count)
+    actual = message(count=actual_call_count)
+
+    return expected, actual, None
+
+
+def get_mock_assert_diff(assert_method, frame_locals):
+    mock_instance = frame_locals["self"]
+    mock_name = extract_mock_name(mock_instance)
+
+    assert_diff_func = {
+        "assert_called_once": partial(
+            assert_call_count_diff, assert_method, mock_instance, mock_name
+        ),
+        "assert_not_called": partial(
+            assert_call_count_diff, assert_method, mock_instance, mock_name
+        ),
+        "assert_called_once_with": None,
+        "assert_called_with": None,
+        "assert_has_calls": None,
+    }[assert_method]
+
+    return assert_diff_func()
+
+
 def dehaze(assert_method, frame_locals):
     # type: (str, dict) -> str
     """
