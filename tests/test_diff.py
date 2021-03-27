@@ -1,13 +1,14 @@
 from unittest import TestCase
 
 try:
-    from unittest.mock import Mock
+    from unittest.mock import call, Mock
 except ImportError:
-    from mock import Mock
+    from mock import call, Mock
 
 from nose_dehaze.diff import (
     assert_bool_diff,
     assert_call_count_diff,
+    assert_called_with_diff,
     get_mock_assert_diff,
 )
 
@@ -62,6 +63,109 @@ class AssertCallCountDiffTest(TestCase):
 
         expected = "Mock \x1b[1m\x1b[33mmock_name\x1b[0m called 0 times."
         actual = "Mock \x1b[1m\x1b[33mmock_name\x1b[0m called 2 times."
+        self.assertEqual((expected, actual, None), result)
+
+
+class AssertCalledWithDiffTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.assert_method = "assert_called_with"
+        cls.mock_name = "mockname"
+
+    def test_no_actual_calls_but_expected_args_and_kwargs(self):
+        mock_instance = Mock(name=self.mock_name)
+
+        frame_locals = {
+            "actual": "not called.",
+            "args": ("arg1", 2),  # expected args
+            "error_message": (
+                "Expected call not found.\n"
+                "Expected: mockname('arg1', 2, kw_a='value_a', kw_b='value_b')\n"
+                "Actual: not called."
+            ),
+            "expected": "mockname('arg1', 2, kw_a='value_a', kw_b='value_b')",
+            "kwargs": {"kw_a": "value_a", "kw_b": "value_b"},  # expected kwargs
+            "self": mock_instance,
+        }
+        result = assert_called_with_diff(
+            self.assert_method, mock_instance, self.mock_name, frame_locals
+        )
+        expected = "mockname('arg1', 2, kw_a='value_a', kw_b='value_b')"
+        actual = "[]"
+        self.assertEqual((expected, actual, None), result)
+
+    def test_single_actual_call_but_expected_args_and_kwargs_mismatch(self):
+        mock_instance = Mock(name=self.mock_name)
+        mock_instance("1", 2, kw_a="a", kw_b="b")
+
+        frame_locals = {
+            "_error_message": Mock(),  # NonCallableMock._error_message func
+            "actual": call("1", 2, kw_a="a", kw_b="b"),  # most recent call on the mock
+            "args": ("arg1", 2),  # expected args
+            "expected": call(
+                "arg1", 2, kw_a="expected_value_a", kw_b="expected_value_b"
+            ),
+            "kwargs": {
+                "kw_a": "expected_value_a",
+                "kw_b": "expected_value_b",
+            },  # expected kwargs
+            "self": mock_instance,
+        }
+        result = assert_called_with_diff(
+            self.assert_method, mock_instance, self.mock_name, frame_locals
+        )
+        expected = (
+            "mockname('arg1', 2, kw_a='expected_value_a', kw_b='expected_value_b')"
+        )
+        actual = "[mockname('1', 2, kw_a='a', kw_b='b')]"
+        self.assertEqual((expected, actual, None), result)
+
+    def test_multiple_actual_calls_but_expected_args_and_kwargs_mismatch(self):
+        mock_instance = Mock(name=self.mock_name)
+        mock_instance("1", 2, kw_a="a", kw_b="b")
+        mock_instance("2", 3, kw_a="a", kw_b="b")
+
+        frame_locals = {
+            "_error_message": Mock(),  # NonCallableMock._error_message func
+            "actual": call("2", 3, kw_a="a", kw_b="b"),  # most recent call on the mock
+            "args": ("arg1", 2),  # expected args
+            "expected": call(
+                "arg1", 2, kw_a="expected_value_a", kw_b="expected_value_b"
+            ),
+            "kwargs": {
+                "kw_a": "expected_value_a",
+                "kw_b": "expected_value_b",
+            },  # expected kwargs
+            "self": mock_instance,
+        }
+        result = assert_called_with_diff(
+            self.assert_method, mock_instance, self.mock_name, frame_locals
+        )
+        expected = (
+            "mockname('arg1', 2, kw_a='expected_value_a', kw_b='expected_value_b')"
+        )
+        actual = (
+            "[mockname('1', 2, kw_a='a', kw_b='b'),\n"
+            " mockname('2', 3, kw_a='a', kw_b='b')]"
+        )
+        self.assertEqual((expected, actual, None), result)
+
+    def test_no_expected_args_or_kwargs(self):
+        mock_instance = Mock(name=self.mock_name)
+        mock_instance("1", 2, kw_a="a", kw_b="b")
+        frame_locals = {
+            "_error_message": Mock(),  # NonCallableMock._error_message func
+            "actual": call("1", 2, kw_a="a", kw_b="b"),  # most recent call on the mock
+            "args": (),  # expected args
+            "expected": call(),
+            "kwargs": {},  # expected kwargs
+            "self": mock_instance,
+        }
+        result = assert_called_with_diff(
+            self.assert_method, mock_instance, self.mock_name, frame_locals
+        )
+        expected = "mockname()"
+        actual = "[mockname('1', 2, kw_a='a', kw_b='b')]"
         self.assertEqual((expected, actual, None), result)
 
 

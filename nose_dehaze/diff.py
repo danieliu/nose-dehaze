@@ -224,7 +224,7 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
 
 
 def assert_bool_diff(assert_method, frame_locals):
-    # type: (str, Mock, str, dict) -> tuple
+    # type: (str, dict) -> tuple
     hint = None
     expected = assert_method == "assertTrue"
     actual = frame_locals["expr"]
@@ -257,7 +257,22 @@ def assert_call_count_diff(assert_method, mock_instance, mock_name):
     return expected, actual, None
 
 
+def assert_called_with_diff(assert_method, mock_instance, mock_name, frame_locals):
+    # type: (str, Mock, str, dict) -> tuple
+    expected_args = frame_locals["args"]
+    expected_kwargs = frame_locals["kwargs"]
+
+    # TODO: diff against and colorize each call individually
+    expected = str(call(*expected_args, **expected_kwargs)).replace("call", mock_name)
+    actual = pformat([c for c in mock_instance.call_args_list], width=1).replace(
+        "call", mock_name
+    )
+
+    return expected, actual, None
+
+
 def get_mock_assert_diff(assert_method, frame_locals):
+    # type: (str, dict) -> tuple
     mock_instance = frame_locals["self"]
     mock_name = extract_mock_name(mock_instance)
 
@@ -269,7 +284,13 @@ def get_mock_assert_diff(assert_method, frame_locals):
             assert_call_count_diff, assert_method, mock_instance, mock_name
         ),
         "assert_called_once_with": None,
-        "assert_called_with": None,
+        "assert_called_with": partial(
+            assert_called_with_diff,
+            assert_method,
+            mock_instance,
+            mock_name,
+            frame_locals,
+        ),
         "assert_has_calls": None,
     }[assert_method]
 
