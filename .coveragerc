@@ -1,0 +1,11 @@
+[run]
+branch=True
+cover_pylib=False
+source=
+    nose_dehaze/
+
+[report]
+precision = 2
+exclude_lines =
+    # MyPy
+    if TYPE_CHECKING
