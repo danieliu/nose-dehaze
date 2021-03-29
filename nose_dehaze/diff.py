@@ -279,7 +279,9 @@ def assert_has_calls_diff(assert_method, mock_instance, mock_name, frame_locals)
     # expected is a normal list, mock call_args_list is a CallList so we coerce to a
     # normal list for consistent formatting
     expected = pformat(expected_calls, width=1).replace("call", mock_name)
-    actual = pformat(list(mock_instance.call_args_list), width=1).replace("call", mock_name)
+    actual = pformat(list(mock_instance.call_args_list), width=1).replace(
+        "call", mock_name
+    )
 
     if not mock_instance.call_count == len(expected_calls):
         expected_line = MOCK_CALL_COUNT_MSG.format(
@@ -397,89 +399,20 @@ def dehaze(assert_method, frame_locals):
         expected = pformat(frame_locals["d1"], width=1)
         actual = pformat(frame_locals["d2"], width=1)
     elif assert_method in {"assertTrue", "assertFalse"}:
-        expected = pformat(assert_method == "assertTrue")
-        expr = frame_locals["expr"]
-        actual = pformat(expr)
-
-        # add hint when the value being checked isn't a bool
-        if not isinstance(expr, bool):
-            booly = "falsy" if assert_method == "assertTrue" else "truthy"
-            hint = "{expr} is {booly}".format(
-                expr=deleted_text(actual),
-                booly=deleted_text(booly),
-            )
-    elif assert_method in {"assert_called_once", "assert_not_called"}:
-        mock_instance = frame_locals["self"]
-        mock_name = header_text(extract_mock_name(mock_instance))
-        expected_call_count = {
-            "assert_called_once": 1,
-            "assert_not_called": 0,
-        }[assert_method]
-        expected = MOCK_CALL_COUNT_MSG.format(
-            padding="",
-            label="",
-            mock_name=mock_name,
-            num=expected_call_count,
-        )
-        actual = MOCK_CALL_COUNT_MSG.format(
-            padding="",
-            label="",
-            mock_name=mock_name,
-            num=mock_instance.call_count,
-        )
+        expected, actual, hint = assert_bool_diff(assert_method, frame_locals)
+    elif assert_method in {
+        "assert_called_once",
+        "assert_not_called",
+        "assert_called_with",
+        "assert_has_calls",
+    }:
+        expected, actual, hint = get_mock_assert_diff(assert_method, frame_locals)
     elif assert_method == "assert_called_once_with":
         formatted_output = build_call_args_diff_output(
             frame_locals["self"],
             frame_locals["args"],
             frame_locals["kwargs"],
         )
-    elif assert_method == "assert_called_with":
-        mock_instance = frame_locals["self"]
-        mock_name = extract_mock_name(mock_instance)
-
-        expected_args = frame_locals["args"]
-        expected_kwargs = frame_locals["kwargs"]
-
-        # TODO: diff against and colorize each call individually
-        actual = pformat([c for c in mock_instance.call_args_list], width=1).replace(
-            "call", mock_name
-        )
-        expected = str(call(*expected_args, **expected_kwargs)).replace(
-            "call", mock_name
-        )
-    elif assert_method == "assert_has_calls":
-        mock_instance = frame_locals["self"]
-        mock_name = extract_mock_name(mock_instance)
-
-        expected_calls = frame_locals["expected"]
-
-        expected = pformat([c for c in expected_calls], width=1).replace(
-            "call", mock_name
-        )
-        actual = pformat([c for c in mock_instance.call_args_list], width=1).replace(
-            "call", mock_name
-        )
-
-        if not mock_instance.call_count == len(expected_calls):
-            expected_line = MOCK_CALL_COUNT_MSG.format(
-                padding=PADDED_NEWLINE,
-                label=header_text("Expected: "),
-                mock_name=header_text(mock_name),
-                num=deleted_text(len(expected_calls)),
-            )
-            actual_line = MOCK_CALL_COUNT_MSG.format(
-                padding=" " * 12,
-                label=header_text("Actual: "),
-                mock_name=header_text(mock_name),
-                num=inserted_text(mock_instance.call_count),
-            )
-            hint = "\n".join(
-                [
-                    "expected and actual call counts differ",
-                    expected_line,
-                    actual_line,
-                ]
-            )
 
     if expected and actual and not formatted_output:
         act, exp = build_split_diff(actual, expected)
