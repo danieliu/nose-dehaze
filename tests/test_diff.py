@@ -9,6 +9,7 @@ from nose_dehaze.diff import (
     assert_bool_diff,
     assert_call_count_diff,
     assert_called_with_diff,
+    assert_has_calls_diff,
     get_mock_assert_diff,
 )
 
@@ -167,6 +168,59 @@ class AssertCalledWithDiffTest(TestCase):
         expected = "mockname()"
         actual = "[mockname('1', 2, kw_a='a', kw_b='b')]"
         self.assertEqual((expected, actual, None), result)
+
+
+class AssertHasCallsDiffTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.assert_method = "assert_has_calls"
+        cls.mock_name = "multi_call"
+
+    def test_call_count_mismatch_no_actual_calls_returns_hint(self):
+        mock_instance = Mock(name=self.mock_name)
+        frame_locals = {
+            "all_calls": [],  # actual calls
+            "any_order": False,
+            "calls": [call(3, 5), call(3, 5)],  # expected calls
+            "cause": None,
+            "expected": [call(3, 5), call(3, 5)],  # expected calls
+            "problem": "Calls not found.",
+            "self": mock_instance,
+        }
+        result = assert_has_calls_diff(
+            self.assert_method, mock_instance, self.mock_name, frame_locals
+        )
+
+        expected = "[multi_call(3, 5),\n multi_call(3, 5)]"
+        actual = "[]"
+        hint = (
+            "expected and actual call counts differ\n\n"
+            "          \x1b[1m\x1b[33mExpected: \x1b[0mMock \x1b[1m\x1b[33mmulti_call\x1b[0m called \x1b[1m\x1b[31m2\x1b[0m times.\n"  # noqa: E501
+            "            \x1b[1m\x1b[33mActual: \x1b[0mMock \x1b[1m\x1b[33mmulti_call\x1b[0m called \x1b[1m\x1b[32m0\x1b[0m times."  # noqa: E501
+        )
+        self.assertEqual((expected, actual, hint), result)
+
+    def test_call_count_equal_returns_no_hint(self):
+        mock_instance = Mock(name=self.mock_name)
+        mock_instance(3, 5)
+        mock_instance(10, 20)
+        frame_locals = {
+            "all_calls": [call(3, 5), call(10, 20)],  # actual calls
+            "any_order": False,
+            "calls": [call(3, 5), call(3, 5)],  # expected calls
+            "cause": None,
+            "expected": [call(3, 5), call(3, 5)],  # expected calls
+            "problem": "Calls not found.",
+            "self": mock_instance,
+        }
+        result = assert_has_calls_diff(
+            self.assert_method, mock_instance, self.mock_name, frame_locals
+        )
+
+        expected = "[multi_call(3, 5),\n multi_call(3, 5)]"
+        actual = "[multi_call(3, 5),\n multi_call(10, 20)]"
+        hint = None
+        self.assertEqual((expected, actual, hint), result)
 
 
 class GetMockAssertDiffTest(TestCase):

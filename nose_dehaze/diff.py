@@ -271,6 +271,40 @@ def assert_called_with_diff(assert_method, mock_instance, mock_name, frame_local
     return expected, actual, None
 
 
+def assert_has_calls_diff(assert_method, mock_instance, mock_name, frame_locals):
+    # type: (str, Mock, str, dict) -> tuple
+    hint = None
+    expected_calls = frame_locals["expected"]
+
+    # expected is a normal list, mock call_args_list is a CallList so we coerce to a
+    # normal list for consistent formatting
+    expected = pformat(expected_calls, width=1).replace("call", mock_name)
+    actual = pformat(list(mock_instance.call_args_list), width=1).replace("call", mock_name)
+
+    if not mock_instance.call_count == len(expected_calls):
+        expected_line = MOCK_CALL_COUNT_MSG.format(
+            padding=PADDED_NEWLINE,
+            label=header_text("Expected: "),
+            mock_name=header_text(mock_name),
+            num=deleted_text(len(expected_calls)),
+        )
+        actual_line = MOCK_CALL_COUNT_MSG.format(
+            padding=" " * 12,
+            label=header_text("Actual: "),
+            mock_name=header_text(mock_name),
+            num=inserted_text(mock_instance.call_count),
+        )
+        hint = "\n".join(
+            [
+                "expected and actual call counts differ",
+                expected_line,
+                actual_line,
+            ]
+        )
+
+    return expected, actual, hint
+
+
 def get_mock_assert_diff(assert_method, frame_locals):
     # type: (str, dict) -> tuple
     mock_instance = frame_locals["self"]
@@ -291,7 +325,13 @@ def get_mock_assert_diff(assert_method, frame_locals):
             mock_name,
             frame_locals,
         ),
-        "assert_has_calls": None,
+        "assert_has_calls": partial(
+            assert_has_calls_diff,
+            assert_method,
+            mock_instance,
+            mock_name,
+            frame_locals,
+        ),
     }[assert_method]
 
     return assert_diff_func()
