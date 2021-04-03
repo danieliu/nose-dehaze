@@ -348,3 +348,46 @@ class GetMockAssertDiffTest(TestCase):
             "Mock \x1b[1m\x1b[33moriginal.an_attribute.a_method\x1b[0m called 2 times."
         )
         self.assertEqual((expected, actual, None), result)
+
+    def test_assert_called_with_returns_diff(self):
+        assert_method = "assert_called_with"
+        mock_instance = Mock(name="original").an_attribute.a_method
+        mock_instance("1", 2, kw_a="a", kw_b="b")
+        frame_locals = {
+            "_error_message": Mock(),  # NonCallableMock._error_message func
+            "actual": call("1", 2, kw_a="a", kw_b="b"),  # most recent call on the mock
+            "args": (),  # expected args
+            "expected": call(),
+            "kwargs": {},  # expected kwargs
+            "self": mock_instance,
+        }
+        result = get_mock_assert_diff(assert_method, frame_locals)
+
+        expected = "original.an_attribute.a_method()"
+        actual = "[original.an_attribute.a_method('1', 2, kw_a='a', kw_b='b')]"
+        self.assertEqual((expected, actual, None), result)
+
+    def test_assert_has_calls_returns_diff(self):
+        assert_method = "assert_has_calls"
+        mock_instance = Mock(name="original").an_attribute.a_method
+        mock_instance()
+        mock_instance()
+
+        frame_locals = {
+            "all_calls": [],  # actual calls
+            "any_order": False,
+            "calls": [call(3, 5), call(3, 5)],  # expected calls
+            "cause": None,
+            "expected": [call(3, 5), call(3, 5)],  # expected calls
+            "problem": "Calls not found.",
+            "self": mock_instance,
+        }
+
+        result = get_mock_assert_diff(assert_method, frame_locals)
+
+        expected = "[original.an_attribute.a_method(3, 5),\n original.an_attribute.a_method(3, 5)]"
+        actual = (
+            "[original.an_attribute.a_method(),\n original.an_attribute.a_method()]"
+        )
+        hint = None
+        self.assertEqual((expected, actual, hint), result)
