@@ -307,6 +307,65 @@ def assert_has_calls_diff(assert_method, mock_instance, mock_name, frame_locals)
     return expected, actual, hint
 
 
+def get_assert_equal_diff(assert_method, frame_locals):
+    # type: (str, dict) -> tuple
+    expected_key, actual_key = {
+        "assertEqual": ("first", "second"),
+        "assertEquals": ("first", "second"),
+        "assertNotEqual": ("first", "second"),
+        "assertDictEqual": ("d1", "d2"),
+    }[assert_method]
+
+    hint = None
+    expected_value = frame_locals[expected_key]
+    actual_value = frame_locals[actual_key]
+
+    expected_type = type(expected_value)
+    actual_type = type(actual_value)
+
+    expected_pformat_kwargs = {}
+    actual_pformat_kwargs = {}
+
+    if assert_method == "assertNotEqual":
+        comparison = partial(
+            "{expected} {op} {actual}".format,
+            expected=pformat(expected_value),
+            actual=pformat(actual_value),
+        )
+        expected = comparison(op="!=")
+        actual = comparison(op="==")
+        return expected, actual, hint
+
+    if isinstance(expected_value, dict):
+        expected_pformat_kwargs["width"] = 1
+    if isinstance(actual_value, dict):
+        actual_pformat_kwargs["width"] = 1
+
+    if expected_type is not actual_type:
+        hint_expected = TYPE_MISMATCH_HINT_MSG.format(
+            padding=PADDED_NEWLINE,
+            label=header_text("Expected:"),
+            vtype=deleted_text(expected_type),
+        )
+        hint_actual = TYPE_MISMATCH_HINT_MSG.format(
+            padding=" " * 12,
+            label=header_text("Actual:"),
+            vtype=inserted_text(actual_type),
+        )
+        hint = "\n".join(
+            [
+                "expected and actual are different types",
+                hint_expected,
+                hint_actual,
+            ]
+        )
+
+    expected = pformat(expected_value, **expected_pformat_kwargs)
+    actual = pformat(actual_value, **actual_pformat_kwargs)
+
+    return expected, actual, hint
+
+
 def get_mock_assert_diff(assert_method, frame_locals):
     # type: (str, dict) -> tuple
     mock_instance = frame_locals["self"]
@@ -355,49 +414,13 @@ def dehaze(assert_method, frame_locals):
     hint = None
     formatted_output = None
 
-    if assert_method in {"assertEqual", "assertEquals"}:
-        expected = frame_locals["first"]
-        actual = frame_locals["second"]
-
-        # add hint when types differ
-        if type(expected) is not type(actual):
-            expected_line = TYPE_MISMATCH_HINT_MSG.format(
-                padding=PADDED_NEWLINE,
-                label=header_text("Expected:"),
-                vtype=deleted_text(type(expected)),
-            )
-            actual_line = TYPE_MISMATCH_HINT_MSG.format(
-                padding=" " * 12,
-                label=header_text("Actual:"),
-                vtype=inserted_text(type(actual)),
-            )
-            hint = "\n".join(
-                [
-                    "expected and actual are different types",
-                    expected_line,
-                    actual_line,
-                ]
-            )
-
-        if isinstance(expected, dict) and isinstance(actual, dict):
-            # pad newlines to align to "Expected: "
-            expected = pformat(expected, width=1)
-            actual = pformat(actual, width=1)
-        elif isinstance(expected, list) and isinstance(actual, list):
-            expected = pformat(expected)
-            actual = pformat(actual)
-        else:
-            expected = pformat(expected)
-            actual = pformat(actual)
-    elif assert_method == "assertNotEqual":
-        first = pformat(frame_locals["first"])
-        second = pformat(frame_locals["second"])
-        comparison = partial("{first} {op} {second}".format, first=first, second=second)
-        expected = comparison(op="!=")
-        actual = comparison(op="==")
-    elif assert_method == "assertDictEqual":
-        expected = pformat(frame_locals["d1"], width=1)
-        actual = pformat(frame_locals["d2"], width=1)
+    if assert_method in {
+        "assertEqual",
+        "assertEquals",
+        "assertNotEqual",
+        "assertDictEqual",
+    }:
+        expected, actual, hint = get_assert_equal_diff(assert_method, frame_locals)
     elif assert_method in {"assertTrue", "assertFalse"}:
         expected, actual, hint = assert_bool_diff(assert_method, frame_locals)
     elif assert_method in {

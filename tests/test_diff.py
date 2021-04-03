@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 try:
-    from unittest.mock import call, Mock
+    from unittest.mock import Mock, call
 except ImportError:
     from mock import call, Mock
 
@@ -10,6 +10,7 @@ from nose_dehaze.diff import (
     assert_call_count_diff,
     assert_called_with_diff,
     assert_has_calls_diff,
+    get_assert_equal_diff,
     get_mock_assert_diff,
 )
 
@@ -221,6 +222,92 @@ class AssertHasCallsDiffTest(TestCase):
         actual = "[multi_call(3, 5),\n multi_call(10, 20)]"
         hint = None
         self.assertEqual((expected, actual, hint), result)
+
+
+class GetAssertEqualDiffTest(TestCase):
+    def test_same_types_returns_formatted_expected_and_actual_with_no_hint(self):
+        frame_locals = {
+            "assertion_func": Mock(),  # TestCase._baseAssertEqual method
+            "first": "hello",
+            "msg": None,
+            "second": "world",
+            "self": Mock(),  # TestCase class of current test method
+        }
+        result = get_assert_equal_diff("assertEqual", frame_locals)
+        self.assertEqual(("'hello'", "'world'", None), result)
+
+    def test_different_types_returns_with_hint(self):
+        frame_locals = {
+            "assertion_func": Mock(),  # TestCase._baseAssertEqual method
+            "first": 1234,
+            "msg": None,
+            "second": "world",
+            "self": Mock(),  # TestCase class of current test method
+        }
+        result = get_assert_equal_diff("assertEqual", frame_locals)
+        hint = (
+            "expected and actual are different types\n\n"
+            "          \x1b[1m\x1b[33mExpected:\x1b[0m \x1b[1m\x1b[31m<class 'int'>\x1b[0m\n"  # noqa: E501
+            "            \x1b[1m\x1b[33mActual:\x1b[0m \x1b[1m\x1b[32m<class 'str'>\x1b[0m"  # noqa: E501
+        )
+        self.assertEqual(("1234", "'world'", hint), result)
+
+    def test_assert_equals_returns_successfully(self):
+        frame_locals = {
+            "assertion_func": Mock(),  # TestCase._baseAssertEqual method
+            "first": "hello",
+            "msg": None,
+            "second": "world",
+            "self": Mock(),  # TestCase class of current test method
+        }
+        result = get_assert_equal_diff("assertEquals", frame_locals)
+        self.assertEqual(("'hello'", "'world'", None), result)
+
+    def test_assert_not_equal_returns_successfully_without_hint(self):
+        frame_locals = {
+            "first": "hello",
+            "msg": "'hello' == 'hello'",
+            "second": "hello",
+            "self": Mock(),  # TestCase class of current test method
+        }
+        result = get_assert_equal_diff("assertNotEqual", frame_locals)
+        self.assertEqual(("'hello' != 'hello'", "'hello' == 'hello'", None), result)
+
+    def test_assert_dict_equal_pformats_dicts_with_width_1_and_returns_successfully(
+        self,
+    ):
+        frame_locals = {
+            "d1": {"hello": "world", "number": 123},
+            "d2": {"hello": "universe", "number": 999},
+            "diff": (
+                "\n"
+                "- {'hello': 'world', 'number': 123}\n"
+                "?            ^^ ^^             ^^^\n"
+                "\n"
+                "+ {'hello': 'universe', 'number': 999}\n"
+                "?            ^^^^^ ^^             ^^^\n"
+            ),
+            "msg": None,
+            "self": Mock(),  # TestCase class of current test method
+            "standardMsg": (
+                "{'hello': 'world', 'number': 123} != {'hello': 'universe', "
+                "'number': 999}\n"
+                "- {'hello': 'world', 'number': 123}\n"
+                "?            ^^ ^^             ^^^\n"
+                "\n"
+                "+ {'hello': 'universe', 'number': 999}\n"
+                "?            ^^^^^ ^^             ^^^\n"
+            ),
+        }
+        result = get_assert_equal_diff("assertDictEqual", frame_locals)
+        self.assertEqual(
+            (
+                "{'hello': 'world',\n 'number': 123}",
+                "{'hello': 'universe',\n 'number': 999}",
+                None,
+            ),
+            result,
+        )
 
 
 class GetMockAssertDiffTest(TestCase):
