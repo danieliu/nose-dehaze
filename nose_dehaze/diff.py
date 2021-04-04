@@ -1,5 +1,5 @@
 """
-utils for diffing, completely "borrowed" from pytest-clarity
+diff utils to extract assert values and build colorized diff output
 """
 import difflib
 from functools import partial
@@ -37,6 +37,17 @@ def utf8_replace(s):
 
 
 def build_split_diff(lhs_repr, rhs_repr):
+    # type: (str, str) -> tuple
+    """
+    Copy pasted from pytest-clarity.
+
+    Compares string representations of expected and actual, building the colorized
+    diff output for consumption.
+
+    :param lhs_repr: the string representation of the "left" i.e. expected
+    :param rhs_repr: the string representation of the "right" i.e. actual
+    :return: tuple of the "left" and "right" colorized newline separated strings
+    """
     lhs_out, rhs_out = "", ""
 
     matcher = difflib.SequenceMatcher(None, lhs_repr, rhs_repr)
