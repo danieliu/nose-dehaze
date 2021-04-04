@@ -201,7 +201,7 @@ def assert_bool_diff(assert_method, frame_locals):
     if not isinstance(actual, bool):
         booly = "falsy" if assert_method == "assertTrue" else "truthy"
         hint = "{expr} is {booly}".format(
-            expr=deleted_text(actual),
+            expr=deleted_text(pformat(actual)),
             booly=deleted_text(booly),
         )
 

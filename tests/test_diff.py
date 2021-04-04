@@ -42,6 +42,19 @@ class AssertBoolDiffTest(TestCase):
         hint = "\x1b[1m\x1b[31m0\x1b[0m is \x1b[1m\x1b[31mfalsy\x1b[0m"
         self.assertEqual((expected, actual, hint), result)
 
+    def test_actual_is_falsy_str_returns_with_hint(self):
+        frame_locals = {
+            "expr": '',
+            "msg": "'' is not True",
+            "self": Mock(),  # unittest.TestCase instance
+        }
+        result = assert_bool_diff("assertTrue", frame_locals)
+
+        expected = "True"
+        actual = "''"
+        hint = "\x1b[1m\x1b[31m''\x1b[0m is \x1b[1m\x1b[31mfalsy\x1b[0m"
+        self.assertEqual((expected, actual, hint), result)
+
 
 class AssertCallCountDiffTest(TestCase):
     def test_called_once_returns_message_with_count_1(self):
