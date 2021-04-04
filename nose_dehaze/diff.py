@@ -113,8 +113,6 @@ def build_args_diff(expected, actual):
                     atype=inserted_text(type(actual)),
                 )
             )
-        else:
-            hints.append(None)
 
         act, exp = build_split_diff(pformat(b), pformat(a))
         expected_args.append("\n".join(exp))
@@ -135,6 +133,7 @@ def build_args_diff(expected, actual):
 
 
 def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
+    # type: (Mock, tuple, dict) -> str
     """
     Creates the formatted, colorized output for mock.assert_called_with failures.
 
@@ -293,8 +292,8 @@ def get_assert_equal_diff(assert_method, frame_locals):
     expected_type = type(expected_value)
     actual_type = type(actual_value)
 
-    expected_pformat_kwargs = {}
-    actual_pformat_kwargs = {}
+    expected_pformat_kwargs = {}  # type: dict
+    actual_pformat_kwargs = {}  # type: dict
 
     if assert_method == "assertNotEqual":
         comparison = partial(
