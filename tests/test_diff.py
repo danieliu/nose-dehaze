@@ -385,7 +385,10 @@ class GetMockAssertDiffTest(TestCase):
 
         result = get_mock_assert_diff(assert_method, frame_locals)
 
-        expected = "[original.an_attribute.a_method(3, 5),\n original.an_attribute.a_method(3, 5)]"
+        expected = (
+            "[original.an_attribute.a_method(3, 5),\n"
+            " original.an_attribute.a_method(3, 5)]"
+        )
         actual = (
             "[original.an_attribute.a_method(),\n original.an_attribute.a_method()]"
         )

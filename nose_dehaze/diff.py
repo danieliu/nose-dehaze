@@ -12,12 +12,16 @@ except ImportError:
     from mock import call
 
 from six import text_type
-from termcolor import colored
 
 from nose_dehaze.constants import (
     MOCK_CALL_COUNT_MSG,
     PADDED_NEWLINE,
     TYPE_MISMATCH_HINT_MSG,
+    Colour,
+    deleted_text,
+    diff_intro_text,
+    header_text,
+    inserted_text,
 )
 from nose_dehaze.utils import extract_mock_name
 
@@ -30,28 +34,6 @@ def utf8_replace(s):
         return text_type(s, "utf-8", "replace")
     except TypeError:
         return s
-
-
-class Colour(object):
-    red = "red"
-    green = "green"
-    cyan = "cyan"
-    yellow = "yellow"
-    stop = "\033[0m"
-
-
-class Attr(object):
-    bold = "bold"
-
-
-deleted_text = partial(colored, color=Colour.red, attrs=[Attr.bold])
-diff_intro_text = partial(colored, color=Colour.cyan, attrs=[Attr.bold])
-inserted_text = partial(colored, color=Colour.green, attrs=[Attr.bold])
-header_text = partial(colored, color=Colour.yellow, attrs=[Attr.bold])
-
-
-def non_formatted(text):
-    return Colour.stop + text
 
 
 def build_split_diff(lhs_repr, rhs_repr):
@@ -88,29 +70,6 @@ def build_split_diff(lhs_repr, rhs_repr):
                 rhs_out += "\n"
 
     return lhs_out.splitlines(), rhs_out.splitlines()
-
-
-def build_unified_diff(lhs_repr, rhs_repr):
-    differ = difflib.Differ()
-    lines_lhs, lines_rhs = lhs_repr.splitlines(), rhs_repr.splitlines()
-    diff = differ.compare(lines_lhs, lines_rhs)
-
-    output = []
-    for line in diff:
-        # Differ instructs us how to transform left into right, but we want
-        # our colours to indicate how to transform right into left
-        if line.startswith("- "):
-            output.append(inserted_text(" L " + line[2:]))
-        elif line.startswith("+ "):
-            output.append(deleted_text(" R " + line[2:]))
-        elif line.startswith("? "):
-            # We can use this to find the index of change in the
-            # line above if required in the future
-            pass
-        else:
-            output.append(non_formatted(line))
-
-    return output
 
 
 def build_args_diff(expected, actual):
