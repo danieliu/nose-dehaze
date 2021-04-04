@@ -383,22 +383,25 @@ def dehaze(assert_method, frame_locals):
     hint = None
     formatted_output = None
 
-    if assert_method in {
-        "assertEqual",
-        "assertEquals",
-        "assertNotEqual",
-        "assertDictEqual",
-    }:
-        expected, actual, hint = get_assert_equal_diff(assert_method, frame_locals)
-    elif assert_method in {"assertTrue", "assertFalse"}:
-        expected, actual, hint = assert_bool_diff(assert_method, frame_locals)
-    elif assert_method in {
-        "assert_called_once",
-        "assert_not_called",
-        "assert_called_with",
-        "assert_has_calls",
-    }:
-        expected, actual, hint = get_mock_assert_diff(assert_method, frame_locals)
+    diff_func = {
+        # equal
+        "assertEqual": get_assert_equal_diff,
+        "assertEqual": get_assert_equal_diff,
+        "assertEquals": get_assert_equal_diff,
+        "assertNotEqual": get_assert_equal_diff,
+        "assertDictEqual": get_assert_equal_diff,
+        # bool
+        "assertTrue": assert_bool_diff,
+        "assertFalse": assert_bool_diff,
+        # mock
+        "assert_called_once": get_mock_assert_diff,
+        "assert_not_called": get_mock_assert_diff,
+        "assert_called_with": get_mock_assert_diff,
+        "assert_has_calls": get_mock_assert_diff,
+    }.get(assert_method)
+
+    if diff_func is not None:
+        expected, actual, hint = diff_func(assert_method, frame_locals)
     elif assert_method == "assert_called_once_with":
         formatted_output = build_call_args_diff_output(
             frame_locals["self"],
