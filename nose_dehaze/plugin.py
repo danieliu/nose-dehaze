@@ -12,11 +12,12 @@ class Dehaze(Plugin):
     score = 1020
 
     def options(self, parser, env):
+        enabled = env.get(self.env_opt, "false").lower() in {"true", "1"}
         parser.add_option(
             "--dehaze",
             action="store_true",
-            default=env.get(self.env_opt, False),
-            dest="dehaze",
+            default=enabled,
+            dest=self.enableOpt,
             help="Prettify and colorize test results output. Environment variable: {}".format(  # noqa: E501
                 self.env_opt
             ),
