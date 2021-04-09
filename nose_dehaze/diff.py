@@ -209,6 +209,23 @@ def assert_bool_diff(assert_method, frame_locals):
     return pformat(expected), pformat(actual), hint
 
 
+def assert_is_none_diff(assert_method, frame_locals):
+    # type: (str, dict) -> tuple
+    hint = None
+    comparison = ["is", "is not"]
+    if assert_method == "assertIsNotNone":
+        comparison = comparison[::-1]
+    expected_op, actual_op = comparison
+
+    actual_value = frame_locals["obj"]
+    message = partial("{actual} {op} None.".format, actual=pformat(actual_value))
+
+    expected = message(op=expected_op)
+    actual = message(op=actual_op)
+
+    return expected, actual, hint
+
+
 def assert_call_count_diff(assert_method, mock_instance, mock_name):
     # type: (str, Mock, str) -> tuple
     expected_call_count = {
@@ -382,6 +399,8 @@ ASSERT_METHOD_TO_DIFF_FUNC = {
     # is
     "assertIs": get_assert_equal_diff,
     "assertIsNot": get_assert_equal_diff,
+    "assertIsNone": assert_is_none_diff,
+    "assertIsNotNone": assert_is_none_diff,
     # bool
     "assertTrue": assert_bool_diff,
     "assertFalse": assert_bool_diff,

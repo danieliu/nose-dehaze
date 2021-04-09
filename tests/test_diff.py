@@ -10,6 +10,7 @@ from nose_dehaze.diff import (
     assert_call_count_diff,
     assert_called_with_diff,
     assert_has_calls_diff,
+    assert_is_none_diff,
     get_assert_equal_diff,
     get_mock_assert_diff,
 )
@@ -53,6 +54,36 @@ class AssertBoolDiffTest(TestCase):
         expected = "True"
         actual = "''"
         hint = "\x1b[1m\x1b[31m''\x1b[0m is \x1b[1m\x1b[31mfalsy\x1b[0m"
+        self.assertEqual((expected, actual, hint), result)
+
+
+class AssertIsNoneDiffTest(TestCase):
+    def test_is_none_returns_expected_is_and_actual_is_not(self):
+        frame_locals = {
+            "msg": None,
+            "obj": "hello",
+            "self": Mock(),  # unittest.TestCase instance
+            "standardMsg": "'hello' is not None",
+        }
+        result = assert_is_none_diff("assertIsNone", frame_locals)
+
+        expected = "'hello' is None."
+        actual = "'hello' is not None."
+        hint = None
+        self.assertEqual((expected, actual, hint), result)
+
+    def test_is_not_none_returns_expected_is_not_and_actual_is(self):
+        frame_locals = {
+            "msg": None,
+            "obj": None,
+            "self": Mock(),  # unittest.TestCase instance
+            "standardMsg": "unexpectedly None",
+        }
+        result = assert_is_none_diff("assertIsNotNone", frame_locals)
+
+        expected = "None is not None."
+        actual = "None is None."
+        hint = None
         self.assertEqual((expected, actual, hint), result)
 
 
