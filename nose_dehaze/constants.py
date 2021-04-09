@@ -14,6 +14,7 @@ FRAME_LOCALS_EXPECTED_ACTUAL_KEYS = {
     "assertSetEqual": ("set1", "set2"),
     "assertTupleEqual": ("tuple1", "tuple2"),
     "assertListEqual": ("list1", "list2"),
+    "assertSequenceEqual": ("seq1", "seq2"),
 }
 
 

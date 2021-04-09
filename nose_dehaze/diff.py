@@ -373,6 +373,7 @@ ASSERT_METHOD_TO_DIFF_FUNC = {
     "assertSetEqual": get_assert_equal_diff,
     "assertTupleEqual": get_assert_equal_diff,
     "assertListEqual": get_assert_equal_diff,
+    "assertSequenceEqual": get_assert_equal_diff,
     # bool
     "assertTrue": assert_bool_diff,
     "assertFalse": assert_bool_diff,

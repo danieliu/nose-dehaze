@@ -380,6 +380,52 @@ class GetAssertEqualDiffTest(TestCase):
             result,
         )
 
+    def test_assert_sequence_equal(self):
+        frame_locals = {
+            "diffMsg": "\n- [1, 2, 3, 4, 5]\n+ [1, 3, 5, 2, 4]",
+            "differing": (
+                "Sequences differ: [1, 2, 3, 4, 5] != [1, 3, 5, 2, 4]\n\n"
+                "First differing element 1:\n"
+                "2\n"
+                "3\n"
+            ),
+            "i": 1,
+            "item1": 2,
+            "item2": 3,
+            "len1": 5,
+            "len2": 5,
+            "msg": (
+                "Sequences differ: [1, 2, 3, 4, 5] != [1, 3, 5, 2, 4]\n\n"
+                "First differing element 1:\n"
+                "2\n"
+                "3\n\n"
+                "- [1, 2, 3, 4, 5]\n"
+                "+ [1, 3, 5, 2, 4]"
+            ),
+            "self": Mock(),  # TestCase class of current test method
+            "seq1": [1, 2, 3, 4, 5],
+            "seq2": [1, 3, 5, 2, 4],
+            "seq_type": None,
+            "seq_type_name": "sequence",
+            "standardMsg": (
+                "Sequences differ: [1, 2, 3, 4, 5] != [1, 3, 5, 2, 4]\n\n"
+                "First differing element 1:\n"
+                "2\n"
+                "3\n\n"
+                "- [1, 2, 3, 4, 5]\n"
+                "+ [1, 3, 5, 2, 4]"
+            ),
+        }
+        result = get_assert_equal_diff("assertSequenceEqual", frame_locals)
+        self.assertEqual(
+            (
+                "[1, 2, 3, 4, 5]",
+                "[1, 3, 5, 2, 4]",
+                None,
+            ),
+            result,
+        )
+
 
 class GetMockAssertDiffTest(TestCase):
     def test_assert_called_once_returns_call_count_diff(self):
