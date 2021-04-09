@@ -363,6 +363,23 @@ class GetAssertEqualDiffTest(TestCase):
             result,
         )
 
+    def test_assert_list_equal(self):
+        frame_locals = {
+            "list1": [1, 2, 3, 5],
+            "list2": [1, 2, 3, 4],
+            "msg": None,
+            "self": Mock(),  # TestCase class of current test method
+        }
+        result = get_assert_equal_diff("assertListEqual", frame_locals)
+        self.assertEqual(
+            (
+                "[1, 2, 3, 5]",
+                "[1, 2, 3, 4]",
+                None,
+            ),
+            result,
+        )
+
 
 class GetMockAssertDiffTest(TestCase):
     def test_assert_called_once_returns_call_count_diff(self):

@@ -12,6 +12,7 @@ ASSERT_METHODS = {
     "assertDictEqual",  # automatically called by assertEqual but likely called directly
     "assertSetEqual",
     "assertTupleEqual",
+    "assertListEqual",
     "assertTrue",
     "assertFalse",
     # mocks
