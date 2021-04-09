@@ -5,22 +5,15 @@ from termcolor import colored
 PADDED_NEWLINE = "\n{}".format(" " * 10)
 MOCK_CALL_COUNT_MSG = "{padding}{label}Mock {mock_name} called {num} times."
 TYPE_MISMATCH_HINT_MSG = "{padding}{label} {vtype}"
-ASSERT_METHODS = {
-    "assertEqual",
-    "assertEquals",  # same as assertEqual but "deprecated" and likely still used
-    "assertNotEqual",
-    "assertDictEqual",  # automatically called by assertEqual but likely called directly
-    "assertSetEqual",
-    "assertTupleEqual",
-    "assertListEqual",
-    "assertTrue",
-    "assertFalse",
-    # mocks
-    "assert_called_once",
-    "assert_not_called",
-    "assert_called_once_with",
-    "assert_called_with",
-    "assert_has_calls",
+
+FRAME_LOCALS_EXPECTED_ACTUAL_KEYS = {
+    "assertEqual": ("first", "second"),
+    "assertEquals": ("first", "second"),
+    "assertNotEqual": ("first", "second"),
+    "assertDictEqual": ("d1", "d2"),
+    "assertSetEqual": ("set1", "set2"),
+    "assertTupleEqual": ("tuple1", "tuple2"),
+    "assertListEqual": ("list1", "list2"),
 }
 
 

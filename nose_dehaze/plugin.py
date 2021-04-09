@@ -1,7 +1,6 @@
 from nose.plugins import Plugin
 
-from nose_dehaze.constants import ASSERT_METHODS
-from nose_dehaze.diff import dehaze
+from nose_dehaze.diff import ASSERT_METHOD_TO_DIFF_FUNC, dehaze
 
 
 class Dehaze(Plugin):
@@ -30,7 +29,7 @@ class Dehaze(Plugin):
         output = None
         while trace and output is None:
             assert_method = trace.tb_frame.f_code.co_name
-            if assert_method in ASSERT_METHODS:
+            if assert_method in ASSERT_METHOD_TO_DIFF_FUNC:
                 output = dehaze(assert_method, trace.tb_frame.f_locals)
 
             trace = trace.tb_next

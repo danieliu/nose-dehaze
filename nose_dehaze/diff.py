@@ -14,6 +14,7 @@ except ImportError:
 from six import text_type
 
 from nose_dehaze.constants import (
+    FRAME_LOCALS_EXPECTED_ACTUAL_KEYS,
     MOCK_CALL_COUNT_MSG,
     PADDED_NEWLINE,
     TYPE_MISMATCH_HINT_MSG,
@@ -278,15 +279,7 @@ def assert_has_calls_diff(assert_method, mock_instance, mock_name, frame_locals)
 
 def get_assert_equal_diff(assert_method, frame_locals):
     # type: (str, dict) -> tuple
-    expected_key, actual_key = {
-        "assertEqual": ("first", "second"),
-        "assertEquals": ("first", "second"),
-        "assertNotEqual": ("first", "second"),
-        "assertDictEqual": ("d1", "d2"),
-        "assertSetEqual": ("set1", "set2"),
-        "assertTupleEqual": ("tuple1", "tuple2"),
-        "assertListEqual": ("list1", "list2"),
-    }[assert_method]
+    expected_key, actual_key = FRAME_LOCALS_EXPECTED_ACTUAL_KEYS[assert_method]
 
     hint = None
     expected_value = frame_locals[expected_key]
@@ -350,7 +343,6 @@ def get_mock_assert_diff(assert_method, frame_locals):
         "assert_not_called": partial(
             assert_call_count_diff, assert_method, mock_instance, mock_name
         ),
-        "assert_called_once_with": None,
         "assert_called_with": partial(
             assert_called_with_diff,
             assert_method,
@@ -370,6 +362,28 @@ def get_mock_assert_diff(assert_method, frame_locals):
     return assert_diff_func()
 
 
+ASSERT_METHOD_TO_DIFF_FUNC = {
+    # equal
+    "assertEqual": get_assert_equal_diff,
+    "assertNotEqual": get_assert_equal_diff,
+    # same as assertEqual but "deprecated" and likely still used
+    "assertEquals": get_assert_equal_diff,
+    # automatically called by assertEqual but likely called directly
+    "assertDictEqual": get_assert_equal_diff,
+    "assertSetEqual": get_assert_equal_diff,
+    "assertTupleEqual": get_assert_equal_diff,
+    "assertListEqual": get_assert_equal_diff,
+    # bool
+    "assertTrue": assert_bool_diff,
+    "assertFalse": assert_bool_diff,
+    # mock
+    "assert_called_once": get_mock_assert_diff,
+    "assert_not_called": get_mock_assert_diff,
+    "assert_called_with": get_mock_assert_diff,
+    "assert_has_calls": get_mock_assert_diff,
+}
+
+
 def dehaze(assert_method, frame_locals):
     # type: (str, dict) -> str
     """
@@ -386,25 +400,7 @@ def dehaze(assert_method, frame_locals):
     hint = None
     formatted_output = None
 
-    diff_func = {
-        # equal
-        "assertEqual": get_assert_equal_diff,
-        "assertEqual": get_assert_equal_diff,
-        "assertEquals": get_assert_equal_diff,
-        "assertNotEqual": get_assert_equal_diff,
-        "assertDictEqual": get_assert_equal_diff,
-        "assertSetEqual": get_assert_equal_diff,
-        "assertTupleEqual": get_assert_equal_diff,
-        "assertListEqual": get_assert_equal_diff,
-        # bool
-        "assertTrue": assert_bool_diff,
-        "assertFalse": assert_bool_diff,
-        # mock
-        "assert_called_once": get_mock_assert_diff,
-        "assert_not_called": get_mock_assert_diff,
-        "assert_called_with": get_mock_assert_diff,
-        "assert_has_calls": get_mock_assert_diff,
-    }.get(assert_method)
+    diff_func = ASSERT_METHOD_TO_DIFF_FUNC.get(assert_method)
 
     if diff_func is not None:
         expected, actual, hint = diff_func(assert_method, frame_locals)
