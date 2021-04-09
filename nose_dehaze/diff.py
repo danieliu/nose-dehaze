@@ -284,6 +284,7 @@ def get_assert_equal_diff(assert_method, frame_locals):
         "assertNotEqual": ("first", "second"),
         "assertDictEqual": ("d1", "d2"),
         "assertSetEqual": ("set1", "set2"),
+        "assertTupleEqual": ("tuple1", "tuple2"),
     }[assert_method]
 
     hint = None
@@ -392,6 +393,7 @@ def dehaze(assert_method, frame_locals):
         "assertNotEqual": get_assert_equal_diff,
         "assertDictEqual": get_assert_equal_diff,
         "assertSetEqual": get_assert_equal_diff,
+        "assertTupleEqual": get_assert_equal_diff,
         # bool
         "assertTrue": assert_bool_diff,
         "assertFalse": assert_bool_diff,

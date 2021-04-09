@@ -345,6 +345,24 @@ class GetAssertEqualDiffTest(TestCase):
             result,
         )
 
+    def test_assert_tuple_equal(self):
+        frame_locals = {
+            "msg": None,
+            "self": Mock(),  # TestCase class of current test method
+            "tuple1": (1, 2, 3),
+            "tuple2": (2, 3, 4),
+        }
+
+        result = get_assert_equal_diff("assertTupleEqual", frame_locals)
+        self.assertEqual(
+            (
+                "(1, 2, 3)",
+                "(2, 3, 4)",
+                None,
+            ),
+            result,
+        )
+
 
 class GetMockAssertDiffTest(TestCase):
     def test_assert_called_once_returns_call_count_diff(self):
