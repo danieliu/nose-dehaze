@@ -10,6 +10,7 @@ ASSERT_METHODS = {
     "assertEquals",  # same as assertEqual but "deprecated" and likely still used
     "assertNotEqual",
     "assertDictEqual",  # automatically called by assertEqual but likely called directly
+    "assertSetEqual",
     "assertTrue",
     "assertFalse",
     # mocks

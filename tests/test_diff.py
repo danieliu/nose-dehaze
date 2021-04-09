@@ -44,7 +44,7 @@ class AssertBoolDiffTest(TestCase):
 
     def test_actual_is_falsy_str_returns_with_hint(self):
         frame_locals = {
-            "expr": '',
+            "expr": "",
             "msg": "'' is not True",
             "self": Mock(),  # unittest.TestCase instance
         }
@@ -317,6 +317,29 @@ class GetAssertEqualDiffTest(TestCase):
             (
                 "{'hello': 'world',\n 'number': 123}",
                 "{'hello': 'universe',\n 'number': 999}",
+                None,
+            ),
+            result,
+        )
+
+    def test_assert_set_equal(self):
+        frame_locals = {
+            "difference1": {8, 5, 6},
+            "difference2": set(),
+            "item": 6,
+            "lines": ["Items in the first set but not the second:", "8", "5", "6"],
+            "msg": None,
+            "self": Mock(),  # TestCase class of current test method
+            "set1": {1, 2, 3, 4, 5, 6, 8},
+            "set2": {1, 2, 3, 4},
+            "standardMsg": "Items in the first set but not the second:\n8\n5\n6",
+        }
+
+        result = get_assert_equal_diff("assertSetEqual", frame_locals)
+        self.assertEqual(
+            (
+                "{1, 2, 3, 4, 5, 6, 8}",
+                "{1, 2, 3, 4}",
                 None,
             ),
             result,
