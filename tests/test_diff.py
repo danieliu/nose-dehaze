@@ -426,6 +426,42 @@ class GetAssertEqualDiffTest(TestCase):
             result,
         )
 
+    def test_assert_is(self):
+        frame_locals = {
+            "expr1": list,
+            "expr2": dict,
+            "msg": None,
+            "self": Mock(),  # TestCase class of current test method
+            "standardMsg": "<class 'list'> is not <class 'dict'>",
+        }
+        result = get_assert_equal_diff("assertIs", frame_locals)
+        self.assertEqual(
+            (
+                "<class 'list'>",
+                "<class 'dict'>",
+                None,
+            ),
+            result,
+        )
+
+    def test_assert_is_not(self):
+        frame_locals = {
+            "expr1": dict,
+            "expr2": dict,
+            "msg": None,
+            "self": Mock(),  # TestCase class of current test method
+            "standardMsg": "unexpectedly identical: <class 'dict'>",
+        }
+        result = get_assert_equal_diff("assertIsNot", frame_locals)
+        self.assertEqual(
+            (
+                "<class 'dict'> is not <class 'dict'>",
+                "<class 'dict'> is <class 'dict'>",
+                None,
+            ),
+            result,
+        )
+
 
 class GetMockAssertDiffTest(TestCase):
     def test_assert_called_once_returns_call_count_diff(self):

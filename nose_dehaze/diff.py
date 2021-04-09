@@ -291,14 +291,19 @@ def get_assert_equal_diff(assert_method, frame_locals):
     expected_pformat_kwargs = {}  # type: dict
     actual_pformat_kwargs = {}  # type: dict
 
-    if assert_method == "assertNotEqual":
+    not_comparison = {
+        "assertNotEqual": ("!=", "=="),
+        "assertIsNot": ("is not", "is"),
+    }.get(assert_method)
+    if not_comparison is not None:
+        expected_op, actual_op = not_comparison
         comparison = partial(
             "{expected} {op} {actual}".format,
             expected=pformat(expected_value),
             actual=pformat(actual_value),
         )
-        expected = comparison(op="!=")
-        actual = comparison(op="==")
+        expected = comparison(op=expected_op)
+        actual = comparison(op=actual_op)
         return expected, actual, hint
 
     if isinstance(expected_value, dict):
@@ -374,6 +379,9 @@ ASSERT_METHOD_TO_DIFF_FUNC = {
     "assertTupleEqual": get_assert_equal_diff,
     "assertListEqual": get_assert_equal_diff,
     "assertSequenceEqual": get_assert_equal_diff,
+    # is
+    "assertIs": get_assert_equal_diff,
+    "assertIsNot": get_assert_equal_diff,
     # bool
     "assertTrue": assert_bool_diff,
     "assertFalse": assert_bool_diff,
