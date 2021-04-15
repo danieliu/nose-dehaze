@@ -226,6 +226,16 @@ def assert_is_none_diff(assert_method, frame_locals):
     return expected, actual, hint
 
 
+def assert_is_instance_diff(assert_method, frame_locals):
+    # type: (str, dict) -> tuple
+    hint = None
+    expected = frame_locals["cls"]
+    actual_value = frame_locals["obj"]
+    actual = actual_value.__class__.__mro__
+
+    return pformat(expected, width=1), pformat(actual, width=1), hint
+
+
 def assert_call_count_diff(assert_method, mock_instance, mock_name):
     # type: (str, Mock, str) -> tuple
     expected_call_count = {
@@ -401,6 +411,8 @@ ASSERT_METHOD_TO_DIFF_FUNC = {
     "assertIsNot": get_assert_equal_diff,
     "assertIsNone": assert_is_none_diff,
     "assertIsNotNone": assert_is_none_diff,
+    "assertIsInstance": assert_is_instance_diff,
+    "assertNotIsInstance": assert_is_instance_diff,
     # bool
     "assertTrue": assert_bool_diff,
     "assertFalse": assert_bool_diff,

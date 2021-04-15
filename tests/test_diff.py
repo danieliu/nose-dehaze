@@ -10,6 +10,7 @@ from nose_dehaze.diff import (
     assert_call_count_diff,
     assert_called_with_diff,
     assert_has_calls_diff,
+    assert_is_instance_diff,
     assert_is_none_diff,
     get_assert_equal_diff,
     get_mock_assert_diff,
@@ -83,6 +84,61 @@ class AssertIsNoneDiffTest(TestCase):
 
         expected = "None is not None."
         actual = "None is None."
+        hint = None
+        self.assertEqual((expected, actual, hint), result)
+
+
+class AssertIsInstanceDiffTest(TestCase):
+    def test_single_expected_instance(self):
+        frame_locals = {
+            "cls": dict,
+            "msg": None,
+            "obj": "hello",
+            "self": Mock(),  # unittest.TestCase instance
+            "standardMsg": "'hello' is not an instance of <class 'dict'>",
+        }
+        result = assert_is_instance_diff("assertIsInstance", frame_locals)
+
+        expected = "<class 'dict'>"
+        actual = "(<class 'str'>,\n <class 'object'>)"
+        hint = None
+        self.assertEqual((expected, actual, hint), result)
+
+    def test_multiple_expected_instances(self):
+        class SomeClass(object):
+            pass
+
+        class Mixin(object):
+            pass
+
+        class SubA(SomeClass):
+            pass
+
+        class Actual(SubA, Mixin):
+            pass
+
+        actual_obj = Actual()
+
+        frame_locals = {
+            "cls": (dict, list, int),
+            "msg": None,
+            "obj": actual_obj,
+            "self": Mock(),  # unittest.TestCase instance
+            "standardMsg": (
+                "<tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.Actual object at 0x11214e8e0> "  # noqa: E501
+                "is not an instance of (<class 'dict'>, <class 'list'>, <class 'int'>)"
+            ),
+        }
+        result = assert_is_instance_diff("assertIsInstance", frame_locals)
+
+        expected = "(<class 'dict'>,\n <class 'list'>,\n <class 'int'>)"
+        actual = (
+            "(<class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.Actual'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.SubA'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.SomeClass'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.Mixin'>,\n"  # noqa: E501
+            " <class 'object'>)"
+        )
         hint = None
         self.assertEqual((expected, actual, hint), result)
 
