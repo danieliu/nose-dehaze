@@ -101,10 +101,15 @@ class AssertIsInstanceDiffTest(TestCase):
 
         expected = "<class 'dict'>"
         actual = "(<class 'str'>,\n <class 'object'>)"
-        hint = None
+        hint = (
+            "\x1b[1m\x1b[33mhello\x1b[0m "
+            "\x1b[1m\x1b[31mis not\x1b[0m "
+            "an instance of "
+            "\x1b[1m\x1b[33m<class 'dict'>\x1b[0m."
+        )
         self.assertEqual((expected, actual, hint), result)
 
-    def test_multiple_expected_instances(self):
+    def test_not_is_instance(self):
         class SomeClass(object):
             pass
 
@@ -125,7 +130,7 @@ class AssertIsInstanceDiffTest(TestCase):
             "obj": actual_obj,
             "self": Mock(),  # unittest.TestCase instance
             "standardMsg": (
-                "<tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.Actual object at 0x11214e8e0> "  # noqa: E501
+                "<tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.Actual object at 0x11214e8e0> "  # noqa: E501
                 "is not an instance of (<class 'dict'>, <class 'list'>, <class 'int'>)"
             ),
         }
@@ -133,13 +138,88 @@ class AssertIsInstanceDiffTest(TestCase):
 
         expected = "(<class 'dict'>,\n <class 'list'>,\n <class 'int'>)"
         actual = (
-            "(<class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.Actual'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.SubA'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.SomeClass'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_multiple_expected_instances.<locals>.Mixin'>,\n"  # noqa: E501
+            "(<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.Actual'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.SubA'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.SomeClass'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.Mixin'>,\n"  # noqa: E501
             " <class 'object'>)"
         )
-        hint = None
+        hint = (
+            "\x1b[1m\x1b[33m{actual_obj_instance}\x1b[0m "
+            "\x1b[1m\x1b[31mis not\x1b[0m "
+            "an instance of "
+            "\x1b[1m\x1b[33m(<class 'dict'>, <class 'list'>, <class 'int'>)\x1b[0m."
+        ).format(actual_obj_instance=actual_obj)
+        self.assertEqual((expected, actual, hint), result)
+
+    def test_not_is_instance_single_instance(self):
+        frame_locals = {
+            "cls": dict,
+            "msg": None,
+            "obj": {"hello": "world"},
+            "self": Mock(),  # unittest.TestCase instance
+            "standardMsg": "{'hello': 'world'} is an instance of <class 'dict'>",
+        }
+        result = assert_is_instance_diff("assertNotIsInstance", frame_locals)
+
+        expected = "<class 'dict'>"
+        actual = "(<class 'dict'>,\n <class 'object'>)"
+        hint = (
+            "\x1b[1m\x1b[33m{'hello': 'world'}\x1b[0m "
+            "\x1b[1m\x1b[31mis\x1b[0m "
+            "an instance of "
+            "\x1b[1m\x1b[33m<class 'dict'>\x1b[0m."
+        )
+        self.assertEqual((expected, actual, hint), result)
+
+    def test_not_is_instance_subclasses_multiple_instances(self):
+        class SomeClass(object):
+            pass
+
+        class Mixin(object):
+            pass
+
+        class SubA(SomeClass):
+            pass
+
+        class Actual(SubA, Mixin):
+            pass
+
+        actual_obj = Actual()
+
+        frame_locals = {
+            "cls": (dict, list, int, SomeClass),
+            "msg": None,
+            "obj": actual_obj,
+            "self": Mock(),  # unittest.TestCase instance
+            "standardMsg": (
+                "<tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.Actual object at 0x11214e8e0> "  # noqa: E501
+                "is an instance of (<class 'dict'>, <class 'list'>, <class 'int'>, "
+                "<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>)"  # noqa: E501
+            ),
+        }
+        result = assert_is_instance_diff("assertIsInstance", frame_locals)
+
+        expected = (
+            "(<class 'dict'>,\n "
+            "<class 'list'>,\n "
+            "<class 'int'>,\n "
+            "<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>)"  # noqa: E501
+        )
+        actual = (
+            "(<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.Actual'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SubA'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>,\n"  # noqa: E501
+            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.Mixin'>,\n"  # noqa: E501
+            " <class 'object'>)"
+        )
+        hint = (
+            "\x1b[1m\x1b[33m{actual_obj_instance}\x1b[0m "
+            "\x1b[1m\x1b[31mis not\x1b[0m "
+            "an instance of "
+            "\x1b[1m\x1b[33m(<class 'dict'>, <class 'list'>, <class 'int'>, "
+            "<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>)\x1b[0m."  # noqa: E501
+        ).format(actual_obj_instance=actual_obj)
         self.assertEqual((expected, actual, hint), result)
 
 

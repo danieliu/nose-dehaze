@@ -233,6 +233,17 @@ def assert_is_instance_diff(assert_method, frame_locals):
     actual_value = frame_locals["obj"]
     actual = actual_value.__class__.__mro__
 
+    hint_verb = {
+        "assertIsInstance": "is not",
+        "assertNotIsInstance": "is",
+    }[assert_method]
+
+    hint = "{actual} {verb} an instance of {expected}.".format(
+        actual=header_text(actual_value),
+        verb=deleted_text(hint_verb),
+        expected=header_text(expected),
+    )
+
     return pformat(expected, width=1), pformat(actual, width=1), hint
 
 
