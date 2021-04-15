@@ -27,6 +27,8 @@ from nose_dehaze.constants import (
 from nose_dehaze.utils import extract_mock_name
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from mock import Mock
 
 
@@ -436,7 +438,7 @@ ASSERT_METHOD_TO_DIFF_FUNC = {
 
 
 def dehaze(assert_method, frame_locals):
-    # type: (str, dict) -> str
+    # type: (str, dict) -> Optional[str]
     """
     Given a test assert method, e.g. assertEqual, extracts the corresponding relevant
     local variables needed to reconstruct the reason for assertion failure and render
@@ -461,8 +463,10 @@ def dehaze(assert_method, frame_locals):
             frame_locals["args"],
             frame_locals["kwargs"],
         )
+    else:
+        return None
 
-    if expected and actual and not formatted_output:
+    if formatted_output is None and expected and actual:
         act, exp = build_split_diff(actual, expected)
         formatted_output = (
             "\n\n{expected_label} {expected}\n  {actual_label} {actual}"
@@ -473,7 +477,7 @@ def dehaze(assert_method, frame_locals):
             actual=utf8_replace(PADDED_NEWLINE.join(act)),
         )
 
-    if hint is not None:
+    if formatted_output is not None and hint is not None:
         hint_output = "\n\n    {hint_label} {hint}".format(
             hint_label=Colour.stop + diff_intro_text("hint:"),
             hint=hint,
