@@ -1,9 +1,9 @@
 from unittest import TestCase
 
 try:
-    from unittest.mock import Mock, call
+    from unittest.mock import Mock, call, patch
 except ImportError:
-    from mock import call, Mock
+    from mock import Mock, call, patch
 
 from nose_dehaze.diff import (
     assert_bool_diff,
@@ -12,6 +12,7 @@ from nose_dehaze.diff import (
     assert_has_calls_diff,
     assert_is_instance_diff,
     assert_is_none_diff,
+    dehaze,
     get_assert_equal_diff,
     get_mock_assert_diff,
 )
@@ -714,3 +715,130 @@ class GetMockAssertDiffTest(TestCase):
         )
         hint = None
         self.assertEqual((expected, actual, hint), result)
+
+
+class DehazeTest(TestCase):
+    def setUp(self):
+        self.p_get_assert_equal_diff = patch("nose_dehaze.diff.get_assert_equal_diff")
+        self.p_assert_is_none_diff = patch("nose_dehaze.diff.assert_is_none_diff")
+        self.p_assert_is_instance_diff = patch(
+            "nose_dehaze.diff.assert_is_instance_diff"
+        )
+        self.p_assert_bool_diff = patch("nose_dehaze.diff.assert_bool_diff")
+        self.p_get_mock_assert_diff = patch("nose_dehaze.diff.get_mock_assert_diff")
+
+        self.m_get_assert_equal_diff = self.p_get_assert_equal_diff.start()
+        self.m_assert_is_none_diff = self.p_assert_is_none_diff.start()
+        self.m_assert_is_instance_diff = self.p_assert_is_instance_diff.start()
+        self.m_assert_bool_diff = self.p_assert_bool_diff.start()
+        self.m_get_mock_assert_diff = self.p_get_mock_assert_diff.start()
+
+        self.m_method_dict = {
+            "assertEqual": self.m_get_assert_equal_diff,
+            "assertNotEqual": self.m_get_assert_equal_diff,
+            "assertEquals": self.m_get_assert_equal_diff,
+            "assertDictEqual": self.m_get_assert_equal_diff,
+            "assertSetEqual": self.m_get_assert_equal_diff,
+            "assertTupleEqual": self.m_get_assert_equal_diff,
+            "assertListEqual": self.m_get_assert_equal_diff,
+            "assertSequenceEqual": self.m_get_assert_equal_diff,
+            "assertIs": self.m_get_assert_equal_diff,
+            "assertIsNot": self.m_get_assert_equal_diff,
+            "assertIsNone": self.m_assert_is_none_diff,
+            "assertIsNotNone": self.m_assert_is_none_diff,
+            "assertIsInstance": self.m_assert_is_instance_diff,
+            "assertNotIsInstance": self.m_assert_is_instance_diff,
+            "assertTrue": self.m_assert_bool_diff,
+            "assertFalse": self.m_assert_bool_diff,
+            "assert_called_once": self.m_get_mock_assert_diff,
+            "assert_not_called": self.m_get_mock_assert_diff,
+            "assert_called_with": self.m_get_mock_assert_diff,
+            "assert_has_calls": self.m_get_mock_assert_diff,
+        }
+        self.m_assert_method_to_diff_func = patch.dict(
+            "nose_dehaze.diff.ASSERT_METHOD_TO_DIFF_FUNC",
+            self.m_method_dict,
+        )
+        self.m_assert_method_to_diff_func.start()
+
+    def tearDown(self):
+        self.p_get_assert_equal_diff.stop()
+        self.p_assert_is_none_diff.stop()
+        self.p_assert_is_instance_diff.stop()
+        self.p_assert_bool_diff.stop()
+        self.p_get_mock_assert_diff.stop()
+        self.m_assert_method_to_diff_func.stop()
+
+    def test_all_mapped_cases_get_called_and_return_formatted_output_including_hint(
+        self,
+    ):
+        m_diff_return_value = (
+            "hello",
+            "hello world",
+            "hint message",
+        )
+
+        frame_locals = {}
+
+        for assert_method, mock_diff_func in self.m_method_dict.items():
+            mock_diff_func.return_value = m_diff_return_value
+
+            result = dehaze(assert_method, frame_locals)
+
+            expected = (
+                "\n"
+                "\n"
+                "\x1b[0m\x1b[1m\x1b[36mExpected:\x1b[0m \x1b[0mhello\n"
+                "  \x1b[0m\x1b[1m\x1b[36mActual:\x1b[0m \x1b[0mhello\x1b[1m\x1b[32m world\x1b[0m\n"  # noqa: E501
+                "\n"
+                "    \x1b[0m\x1b[1m\x1b[36mhint:\x1b[0m hint message"
+            )
+            self.assertEqual(expected, result)
+            mock_diff_func.assert_called_once_with(assert_method, frame_locals)
+            mock_diff_func.reset_mock()
+
+    def test_hint_is_none_returns_output_without_hint_label_and_message(self):
+        m_diff_return_value = (
+            "hello",
+            "hello world",
+            None,
+        )
+        self.m_get_assert_equal_diff.return_value = m_diff_return_value
+        frame_locals = {}
+        result = dehaze("assertEqual", frame_locals)
+
+        expected = (
+            "\n"
+            "\n"
+            "\x1b[0m\x1b[1m\x1b[36mExpected:\x1b[0m \x1b[0mhello\n"
+            "  \x1b[0m\x1b[1m\x1b[36mActual:\x1b[0m \x1b[0mhello\x1b[1m\x1b[32m world\x1b[0m"  # noqa: E501
+        )
+        self.assertEqual(expected, result)
+        self.m_get_assert_equal_diff.assert_called_once_with(
+            "assertEqual", frame_locals
+        )
+
+    def test_assert_called_once_with_returns_formatted_output_directly(self):
+        # unmocked integration test
+        mock_instance = Mock(name="test_mock_name")
+        mock_instance(3, 5)
+
+        frame_locals = {
+            "args": (3, 5, 6, 7),
+            "kwargs": {"extra": "nice"},
+            "self": mock_instance,
+        }
+        result = dehaze("assert_called_once_with", frame_locals)
+
+        expected = (
+            "\n"
+            "\n"
+            "\x1b[0m\x1b[1m\x1b[36mExpected:\x1b[0m \x1b[1m\x1b[33mtest_mock_name\x1b[0m(\x1b[0m3, \x1b[0m5, \x1b[1m\x1b[31m6\x1b[0m, \x1b[1m\x1b[31m7\x1b[0m,\n"  # noqa: E501
+            "                         \x1b[1m\x1b[31mextra='nice'\x1b[0m)\n"
+            "  \x1b[0m\x1b[1m\x1b[36mActual:\x1b[0m \x1b[1m\x1b[33mtest_mock_name\x1b[0m(\x1b[0m3, \x1b[0m5)"  # noqa: E501
+        )
+        self.assertEqual(expected, result)
+
+    def test_unsupported_assert_method_returns_none(self):
+        result = dehaze("assertRegex", {})
+        self.assertIsNone(result)

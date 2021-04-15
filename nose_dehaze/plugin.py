@@ -29,7 +29,10 @@ class Dehaze(Plugin):
         output = None
         while trace and output is None:
             assert_method = trace.tb_frame.f_code.co_name
-            if assert_method in ASSERT_METHOD_TO_DIFF_FUNC:
+            if (
+                assert_method in ASSERT_METHOD_TO_DIFF_FUNC
+                or assert_method == "assert_called_once_with"
+            ):
                 output = dehaze(assert_method, trace.tb_frame.f_locals)
 
             trace = trace.tb_next
