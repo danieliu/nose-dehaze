@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from six import PY2
+
 try:
     from unittest.mock import Mock, call, patch
 except ImportError:
@@ -100,14 +102,18 @@ class AssertIsInstanceDiffTest(TestCase):
         }
         result = assert_is_instance_diff("assertIsInstance", frame_locals)
 
-        expected = "<class 'dict'>"
-        actual = "(<class 'str'>,\n <class 'object'>)"
+        expected = str(dict)
+        actual = (
+            "({0},\n {1},\n {2})".format(str(str), str(basestring), str(object))
+            if PY2
+            else "({0},\n {1})".format(str(str), str(object))
+        )
         hint = (
             "\x1b[1m\x1b[33mhello\x1b[0m "
             "\x1b[1m\x1b[31mis not\x1b[0m "
             "an instance of "
-            "\x1b[1m\x1b[33m<class 'dict'>\x1b[0m."
-        )
+            "\x1b[1m\x1b[33m{instance}\x1b[0m."
+        ).format(instance=str(dict))
         self.assertEqual((expected, actual, hint), result)
 
     def test_not_is_instance(self):
@@ -137,20 +143,16 @@ class AssertIsInstanceDiffTest(TestCase):
         }
         result = assert_is_instance_diff("assertIsInstance", frame_locals)
 
-        expected = "(<class 'dict'>,\n <class 'list'>,\n <class 'int'>)"
-        actual = (
-            "(<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.Actual'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.SubA'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.SomeClass'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance.<locals>.Mixin'>,\n"  # noqa: E501
-            " <class 'object'>)"
+        expected = "({0},\n {1},\n {2})".format(str(dict), str(list), str(int))
+        actual = "({0},\n {1},\n {2},\n {3},\n {4})".format(
+            str(Actual), str(SubA), str(SomeClass), str(Mixin), str(object)
         )
         hint = (
             "\x1b[1m\x1b[33m{actual_obj_instance}\x1b[0m "
             "\x1b[1m\x1b[31mis not\x1b[0m "
             "an instance of "
-            "\x1b[1m\x1b[33m(<class 'dict'>, <class 'list'>, <class 'int'>)\x1b[0m."
-        ).format(actual_obj_instance=actual_obj)
+            "\x1b[1m\x1b[33m({0}, {1}, {2})\x1b[0m."
+        ).format(str(dict), str(list), str(int), actual_obj_instance=actual_obj)
         self.assertEqual((expected, actual, hint), result)
 
     def test_not_is_instance_single_instance(self):
@@ -163,14 +165,14 @@ class AssertIsInstanceDiffTest(TestCase):
         }
         result = assert_is_instance_diff("assertNotIsInstance", frame_locals)
 
-        expected = "<class 'dict'>"
-        actual = "(<class 'dict'>,\n <class 'object'>)"
+        expected = str(dict)
+        actual = "({0},\n {1})".format(str(dict), str(object))
         hint = (
-            "\x1b[1m\x1b[33m{'hello': 'world'}\x1b[0m "
+            "\x1b[1m\x1b[33m{{'hello': 'world'}}\x1b[0m "
             "\x1b[1m\x1b[31mis\x1b[0m "
             "an instance of "
-            "\x1b[1m\x1b[33m<class 'dict'>\x1b[0m."
-        )
+            "\x1b[1m\x1b[33m{instance}\x1b[0m."
+        ).format(instance=str(dict))
         self.assertEqual((expected, actual, hint), result)
 
     def test_not_is_instance_subclasses_multiple_instances(self):
@@ -207,20 +209,24 @@ class AssertIsInstanceDiffTest(TestCase):
             "<class 'int'>,\n "
             "<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>)"  # noqa: E501
         )
-        actual = (
-            "(<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.Actual'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SubA'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>,\n"  # noqa: E501
-            " <class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.Mixin'>,\n"  # noqa: E501
-            " <class 'object'>)"
+        expected = "({0},\n {1},\n {2},\n {3})".format(
+            str(dict), str(list), str(int), str(SomeClass)
+        )
+        actual = "({0},\n {1},\n {2},\n {3},\n {4})".format(
+            str(Actual), str(SubA), str(SomeClass), str(Mixin), str(object)
         )
         hint = (
             "\x1b[1m\x1b[33m{actual_obj_instance}\x1b[0m "
             "\x1b[1m\x1b[31mis not\x1b[0m "
             "an instance of "
-            "\x1b[1m\x1b[33m(<class 'dict'>, <class 'list'>, <class 'int'>, "
-            "<class 'tests.test_diff.AssertIsInstanceDiffTest.test_not_is_instance_subclasses_multiple_instances.<locals>.SomeClass'>)\x1b[0m."  # noqa: E501
-        ).format(actual_obj_instance=actual_obj)
+            "\x1b[1m\x1b[33m({0}, {1}, {2}, {3})\x1b[0m."
+        ).format(
+            str(dict),
+            str(list),
+            str(int),
+            str(SomeClass),
+            actual_obj_instance=actual_obj,
+        )
         self.assertEqual((expected, actual, hint), result)
 
 
@@ -428,9 +434,9 @@ class GetAssertEqualDiffTest(TestCase):
         result = get_assert_equal_diff("assertEqual", frame_locals)
         hint = (
             "expected and actual are different types\n\n"
-            "          \x1b[1m\x1b[33mExpected:\x1b[0m \x1b[1m\x1b[31m<class 'int'>\x1b[0m\n"  # noqa: E501
-            "            \x1b[1m\x1b[33mActual:\x1b[0m \x1b[1m\x1b[32m<class 'str'>\x1b[0m"  # noqa: E501
-        )
+            "          \x1b[1m\x1b[33mExpected:\x1b[0m \x1b[1m\x1b[31m{0}\x1b[0m\n"
+            "            \x1b[1m\x1b[33mActual:\x1b[0m \x1b[1m\x1b[32m{1}\x1b[0m"
+        ).format(str(int), str(str))
         self.assertEqual(("1234", "'world'", hint), result)
 
     def test_assert_equals_returns_successfully(self):
@@ -504,12 +510,14 @@ class GetAssertEqualDiffTest(TestCase):
         }
 
         result = get_assert_equal_diff("assertSetEqual", frame_locals)
+        if PY2:
+            expected = "set([1, 2, 3, 4, 5, 6, 8])"
+            actual = "set([1, 2, 3, 4])"
+        else:
+            expected = "{1, 2, 3, 4, 5, 6, 8}"
+            actual = "{1, 2, 3, 4}"
         self.assertEqual(
-            (
-                "{1, 2, 3, 4, 5, 6, 8}",
-                "{1, 2, 3, 4}",
-                None,
-            ),
+            (expected, actual, None),
             result,
         )
 
@@ -603,12 +611,11 @@ class GetAssertEqualDiffTest(TestCase):
             "standardMsg": "<class 'list'> is not <class 'dict'>",
         }
         result = get_assert_equal_diff("assertIs", frame_locals)
+
+        expected = str(list)
+        actual = str(dict)
         self.assertEqual(
-            (
-                "<class 'list'>",
-                "<class 'dict'>",
-                None,
-            ),
+            (expected, actual, None),
             result,
         )
 
@@ -621,12 +628,11 @@ class GetAssertEqualDiffTest(TestCase):
             "standardMsg": "unexpectedly identical: <class 'dict'>",
         }
         result = get_assert_equal_diff("assertIsNot", frame_locals)
+
+        expected = "{instance} is not {instance}".format(instance=str(dict))
+        actual = "{instance} is {instance}".format(instance=str(dict))
         self.assertEqual(
-            (
-                "<class 'dict'> is not <class 'dict'>",
-                "<class 'dict'> is <class 'dict'>",
-                None,
-            ),
+            (expected, actual, None),
             result,
         )
 
