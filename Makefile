@@ -4,6 +4,9 @@ lint:
 test:
 	nosetests tests
 
+test-all:
+	tox -p
+
 black:
 	black nose_dehaze tests
 

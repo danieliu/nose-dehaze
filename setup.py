@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name="nose-dehaze",
     version="0.1.0",
-    description="A nosetests plugin to colorize error and failure output.",
+    description="A nosetests plugin to format and colorize test failure output for readability.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/danieliu/nose-dehaze",
@@ -29,7 +29,9 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
+        'nose',
         'six',
         'termcolor',
     ],
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, != 3.4.*",
 )

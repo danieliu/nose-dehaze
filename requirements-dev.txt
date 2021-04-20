@@ -1,6 +1,7 @@
-black
+black;python_version>="3.6"
 flake8
+ipdb
+ipython
 isort
-mypy
-nose
-nosexcover
+mypy;python_version>="3.6"
+tox

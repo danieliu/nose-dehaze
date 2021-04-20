@@ -1,5 +1,7 @@
-__pycache__
 *.pyc
 .coverage
+.tox
+__pycache__
 cover
 coverage.xml
+dist
