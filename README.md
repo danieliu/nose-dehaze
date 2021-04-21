@@ -58,6 +58,10 @@ Mocks assert methods:
 * `assert_called_with`
 * `assert_has_calls`
 
+Currently, diff colorization output can vary, especially for more complex assert comparisons such as
+large, nested dicts. This is a side effect of the way dehaze calculates diffs by utilizing difflib
+and passing in stringified expected/actual values.
+
 ## Development
 
 Refer to `Makefile` for commands to test, autoformat, lint, typecheck, etc.
@@ -69,8 +73,6 @@ pip install -r requirements-test.txt  # for running tests
 ```
 
 ### Testing
-
-Running 
 
 ```bash
 # simply run tests
