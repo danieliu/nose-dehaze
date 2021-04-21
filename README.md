@@ -54,6 +54,7 @@ Supported unittest assert methods:
 Mocks assert methods:
 
 * `assert_called_once`
+* `assert_called_once_with`
 * `assert_not_called`
 * `assert_called_with`
 * `assert_has_calls`
