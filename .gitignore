@@ -2,6 +2,7 @@
 .coverage
 .tox
 __pycache__
+build
 cover
 coverage.xml
 dist
