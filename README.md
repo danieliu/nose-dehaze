@@ -23,3 +23,25 @@ export NOSE_DEHAZE=1
 
 nosetests
 ```
+
+## Development
+
+Refer to `Makefile` for commands to test, autoformat, lint, typecheck, etc.
+
+```bash
+pip install -r requirements.txt       # minimum to run code
+pip install -r requirements-dev.txt   # for autoformat, lint, type checking, debugging
+pip install -r requirements-test.txt  # for running tests
+```
+
+### Testing
+
+Running 
+
+```bash
+# simply run tests
+make test
+
+# run tests with all supported python versions
+make test-all
+```

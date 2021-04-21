@@ -1,6 +1,4 @@
 mock;python_version<="2.7"
 nose
 nosexcover
-six
-termcolor
 typing;python_version<"3.5"
