@@ -2,6 +2,14 @@
 
 A [nosetests](https://nose.readthedocs.io/en/latest/) plugin to format and colorize test failure output for readability.
 
+Without `dehaze`:
+
+![without dehaze](./without-dehaze.png)
+
+With `dehaze`:
+
+![with dehaze](./with-dehaze.png)
+
 ## Installation
 
 ```bash
@@ -23,6 +31,32 @@ export NOSE_DEHAZE=1
 
 nosetests
 ```
+
+Supported unittest assert methods:
+
+* `assertEqual`
+* `assertNotEqual`
+* `assertEquals`
+* `assertDictEqual`
+* `assertSetEqual`
+* `assertTupleEqual`
+* `assertListEqual`
+* `assertSequenceEqual`
+* `assertIs`
+* `assertIsNot`
+* `assertIsNone`
+* `assertIsNotNone`
+* `assertIsInstance`
+* `assertNotIsInstance`
+* `assertTrue`
+* `assertFalse`
+
+Mocks assert methods:
+
+* `assert_called_once`
+* `assert_not_called`
+* `assert_called_with`
+* `assert_has_calls`
 
 ## Development
 
