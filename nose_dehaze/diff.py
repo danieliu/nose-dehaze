@@ -176,12 +176,16 @@ def build_call_args_diff_output(mock_instance, e_args, e_kwargs):
         sep=sep_e,
         ekw="\n".join(expected_kwargs) if e_kwargs else "",
     )
-    act = "{mock_name}({act}{sep}{akw})".format(
-        mock_name=header_text(mock_name),
-        act=", ".join(actual_args),
-        sep=sep_a,
-        akw="\n".join(actual_kwargs) if kwargs else "",
-    )
+
+    if mock_instance.call_count:
+        act = "{mock_name}({act}{sep}{akw})".format(
+            mock_name=header_text(mock_name),
+            act=", ".join(actual_args),
+            sep=sep_a,
+            akw="\n".join(actual_kwargs) if kwargs else "",
+        )
+    else:
+        act = "{mock_name} not called.".format(mock_name=header_text(mock_name))
 
     formatted_output = (
         "\n\n{expected_label} {expected}\n  {actual_label} {actual}"

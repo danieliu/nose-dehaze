@@ -14,6 +14,7 @@ from nose_dehaze.diff import (
     assert_has_calls_diff,
     assert_is_instance_diff,
     assert_is_none_diff,
+    build_call_args_diff_output,
     dehaze,
     get_assert_equal_diff,
     get_mock_assert_diff,
@@ -721,6 +722,24 @@ class GetMockAssertDiffTest(TestCase):
         )
         hint = None
         self.assertEqual((expected, actual, hint), result)
+
+
+class BuildCallArgsDiffOutputTest(TestCase):
+    def setUp(self):
+        pass
+
+    def test_mock_not_called_returns_actual_as_not_called(self):
+        mock = Mock(name="original").a_method
+
+        result = build_call_args_diff_output(mock, (1, 2, 3), {})
+
+        expected = (
+            "\n"
+            "\n"
+            "\x1b[0m\x1b[1m\x1b[36mExpected:\x1b[0m \x1b[1m\x1b[33moriginal.a_method\x1b[0m(\x1b[1m\x1b[31m1\x1b[0m, \x1b[1m\x1b[31m2\x1b[0m, \x1b[1m\x1b[31m3\x1b[0m)\n"  # noqa: E501
+            "  \x1b[0m\x1b[1m\x1b[36mActual:\x1b[0m \x1b[1m\x1b[33moriginal.a_method\x1b[0m not called."  # noqa: E501
+        )
+        self.assertEqual(expected, result)
 
 
 class DehazeTest(TestCase):
