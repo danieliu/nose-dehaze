@@ -282,7 +282,8 @@ class AssertCalledWithDiffTest(TestCase):
         )
         expected = "mockname('arg1', 2, kw_a='value_a', kw_b='value_b')"
         actual = "[]"
-        self.assertEqual((expected, actual, None), result)
+        hint = "\x1b[1m\x1b[33mmockname\x1b[0m not called."
+        self.assertEqual((expected, actual, hint), result)
 
     def test_single_actual_call_but_expected_args_and_kwargs_mismatch(self):
         mock_instance = Mock(name=self.mock_name)

@@ -282,7 +282,11 @@ def assert_called_with_diff(assert_method, mock_instance, mock_name, frame_local
         "call", mock_name
     )
 
-    return expected, actual, None
+    hint = None
+    if not mock_instance.call_count:
+        hint = "{mock_name} not called.".format(mock_name=header_text(mock_name))
+
+    return expected, actual, hint
 
 
 def assert_has_calls_diff(assert_method, mock_instance, mock_name, frame_locals):
